@@ -9,6 +9,7 @@ use crate::{
     config::validation::validate_config,
     paths::{get_global_config_path, find_project_config},
     types::{ConfigScope, ConfigDiff, SourceMap},
+    ConfigSearcher, SearchOptions, SearchResult,
 };
 use serde_json::Value;
 use std::fs::{self, File};
@@ -442,6 +443,153 @@ impl ConfigManager {
                 }
             }
         }
+    }
+
+    /// Search configuration for matching keys and/or values
+    ///
+    /// # Arguments
+    /// * `query` - Search query string
+    /// * `scope` - Which config(s) to search (Global, Project, or Both)
+    ///
+    /// # Returns
+    /// Vector of search results with key paths, values, and sources
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use claude_config_manager_core::{ConfigManager, SearchOptions, types::ConfigScope};
+    /// # let manager = ConfigManager::new("/tmp/backups");
+    /// let results = manager.search_config("npx", ConfigScope::Global).unwrap();
+    /// for result in results {
+    ///     println!("{}: {}", result.key_path, result.value);
+    /// }
+    /// ```
+    pub fn search_config(
+        &self,
+        query: &str,
+        scope: ConfigScope,
+    ) -> Result<Vec<SearchResult>> {
+        self.search_config_with_options(query, scope, SearchOptions::new())
+    }
+
+    /// Search configuration with custom options
+    ///
+    /// # Arguments
+    /// * `query` - Search query string
+    /// * `scope` - Which config(s) to search
+    /// * `options` - Search options (case sensitivity, search keys vs values, etc.)
+    ///
+    /// # Returns
+    /// Vector of search results
+    pub fn search_config_with_options(
+        &self,
+        query: &str,
+        scope: ConfigScope,
+        options: SearchOptions,
+    ) -> Result<Vec<SearchResult>> {
+        let mut all_results = Vec::new();
+
+        // Search based on scope
+        match scope {
+            ConfigScope::Global => {
+                let global_path = get_global_config_path();
+                if global_path.exists() {
+                    if let Ok(config) = self.read_config(&global_path) {
+                        let searcher = ConfigSearcher::with_options(options.clone());
+                        let results = searcher.search(
+                            query,
+                            &config,
+                            ConfigScope::Global,
+                            global_path,
+                        )?;
+                        all_results.extend(results);
+                    }
+                }
+            }
+            ConfigScope::Project => {
+                // For project scope, try to find project config from current directory
+                if let Some(project_path) = find_project_config(None) {
+                    if let Ok(config) = self.read_config(&project_path) {
+                        let searcher = ConfigSearcher::with_options(options.clone());
+                        let results = searcher.search(
+                            query,
+                            &config,
+                            ConfigScope::Project,
+                            project_path,
+                        )?;
+                        all_results.extend(results);
+                    }
+                }
+            }
+        }
+
+        Ok(all_results)
+    }
+
+    /// Export configuration to a file
+    ///
+    /// # Arguments
+    /// * `config` - Configuration to export
+    /// * `path` - Destination file path
+    ///
+    /// # Returns
+    /// Path to the exported file
+    ///
+    /// # Errors
+    /// Returns an error if export fails
+    pub fn export_config(
+        &self,
+        config: &crate::ClaudeConfig,
+        path: &Path,
+    ) -> Result<PathBuf> {
+        crate::ConfigImporter::export(config, path)
+    }
+
+    /// Import configuration from a file
+    ///
+    /// # Arguments
+    /// * `path` - Source file path
+    ///
+    /// # Returns
+    /// Imported configuration
+    ///
+    /// # Errors
+    /// Returns an error if import fails
+    pub fn import_config(&self, path: &Path) -> Result<crate::ClaudeConfig> {
+        crate::ConfigImporter::import(path)
+    }
+
+    /// Export configuration with custom options
+    ///
+    /// # Arguments
+    /// * `config` - Configuration to export
+    /// * `path` - Destination file path
+    /// * `options` - Export options
+    ///
+    /// # Returns
+    /// Path to the exported file
+    pub fn export_config_with_options(
+        &self,
+        config: &crate::ClaudeConfig,
+        path: &Path,
+        options: crate::ImportExportOptions,
+    ) -> Result<PathBuf> {
+        crate::ConfigImporter::export_config(config, path, &options)
+    }
+
+    /// Import configuration with custom options
+    ///
+    /// # Arguments
+    /// * `path` - Source file path
+    /// * `options` - Import options
+    ///
+    /// # Returns
+    /// Imported configuration
+    pub fn import_config_with_options(
+        &self,
+        path: &Path,
+        options: crate::ImportExportOptions,
+    ) -> Result<crate::ClaudeConfig> {
+        crate::ConfigImporter::import_config(path, &options)
     }
 }
 

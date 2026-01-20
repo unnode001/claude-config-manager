@@ -59,6 +59,19 @@ enum ConfigCommand {
         /// Project path (default: auto-detect if not provided via --project flag)
         project_path: Option<PathBuf>,
     },
+    /// Export configuration to a file
+    Export {
+        /// Output file path
+        output_file: PathBuf,
+    },
+    /// Import configuration from a file
+    Import {
+        /// Input file path
+        input_file: PathBuf,
+        /// Skip validation
+        #[arg(long)]
+        no_validate: bool,
+    },
 }
 
 impl ConfigArgs {
@@ -73,6 +86,12 @@ impl ConfigArgs {
             }
             ConfigCommand::Diff { project_path } => {
                 self.cmd_diff(project_path.as_ref())?;
+            }
+            ConfigCommand::Export { output_file } => {
+                self.cmd_export(output_file)?;
+            }
+            ConfigCommand::Import { input_file, no_validate } => {
+                self.cmd_import(input_file, !no_validate)?;
             }
         }
         Ok(())
@@ -241,6 +260,61 @@ impl ConfigArgs {
         }
         println!("  Values from global: {}", global_count);
         println!("  Values from project: {}", project_count);
+
+        Ok(())
+    }
+
+    /// Export configuration to a file
+    fn cmd_export(&self, output_file: &PathBuf) -> Result<()> {
+        let backup_dir = get_global_config_path()
+            .parent()
+            .map(|p| p.join("backups"))
+            .unwrap_or_else(|| PathBuf::from(".backups"));
+
+        let manager = ConfigManager::new(&backup_dir);
+
+        // Get configuration to export
+        let config = if let Some(project_path) = &self.project {
+            manager.get_merged_config(Some(project_path))?
+        } else {
+            manager.get_merged_config(None)?
+        };
+
+        // Export configuration
+        let exported_path = manager.export_config(&config, output_file)?;
+
+        println!("Configuration exported to: {}", exported_path.display());
+
+        Ok(())
+    }
+
+    /// Import configuration from a file
+    fn cmd_import(&self, input_file: &PathBuf, validate: bool) -> Result<()> {
+        let backup_dir = get_global_config_path()
+            .parent()
+            .map(|p| p.join("backups"))
+            .unwrap_or_else(|| PathBuf::from(".backups"));
+
+        let manager = ConfigManager::new(&backup_dir);
+
+        // Import configuration
+        let mut options = claude_config_manager_core::ImportExportOptions::default();
+        options.validate = validate;
+
+        let imported_config = manager.import_config_with_options(input_file, options)?;
+
+        // Determine target path
+        let target_path = if let Some(project_path) = &self.project {
+            project_path.join(".claude").join("config.json")
+        } else {
+            get_global_config_path()
+        };
+
+        // Write imported configuration
+        manager.write_config_with_backup(&target_path, &imported_config)?;
+
+        println!("Configuration imported from: {}", input_file.display());
+        println!("Written to: {}", target_path.display());
 
         Ok(())
     }
