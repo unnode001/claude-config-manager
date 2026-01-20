@@ -1,0 +1,95 @@
+{
+  "mcpServers": {
+    "test": {
+      "name": "test",
+      "enabled": true,
+      "command": "uvx",
+      "args": [],
+      "env": {}
+    },
+    "test-server": {
+      "name": "",
+      "enabled": true,
+      "command": "npx",
+      "args": [
+        "-y"
+      ],
+      "env": {}
+    },
+    "npx": {
+      "name": "",
+      "enabled": false,
+      "command": "",
+      "args": [],
+      "env": {}
+    }
+  },
+  "customInstructions": [
+    "Test instruction"
+  ],
+  "dxt:allowlistLastUpdated:d42026ef-6be5-4fd9-a350-069e7691d001": "2026-01-19T05:01:04.060Z",
+  "darkMode": "light",
+  "oauth:tokenCache": "djEwXNCYb5R5R62i4s3mlPfq+khW9b6MdURffdF/DhOe4aH2TPpkncmxy34aWdk9Wcqivk5Nl19msbJbdoYNoZ6SWgo7VvTBXmq1H28zCCaCo+r4OELesq+3SV7sTp4qAJAICTdvb2HOC7Om9wT65Fp3J3IFqdGFtu471xlLzaUQ+1HPyorvkVHT8/pqQGIx1kG2DefUZiydyYj3tuGzmnMGhF6+BwripGCR5FFYRVWb/dr1CcIynPNWcnIN2KHNuIqpdTWkYqOOfAM2HHCO5gVGO2srH7rWV70zrvXJoOGA/4pZgUG65hJF4HyqYfzrqq467AyKyPZbvcxWCEWNzohkNRqFaY84K88Xp39TkrGWd1Txicl6S4l20QRwR0gChsww+kzrPeue++5VbZ2jwhf/g6Q1atnTwnS3g52Bg38JH4Xv2dtGkyh5JQc4vNP2e5Y7A8pxtdg=",
+  "userThemeMode": "system",
+  "dxt:allowlistCache": "djEwfYBqNxAtBZPjQxnY/EFDxQCWK2+VFKsJ+5bWGnt4THFKdj6CpaQBVSlGTiRzsh/69CwtJjOX040C6QZ3s/yBVNXa2vx+zZ28gvrC+eMj2duBhosPahs3MMcObAUsvKS37bngWFqnzN08MkiG0/aKhMsG8W6+obZosLG3me6VNA5T/q8pAc+8e3L+BIjOjyB3oxVSEpKEfGP1hwblcInn0cUQkLZhDQb6vdWy8p7tG6ekeQcnbBjNvN5rCSqbV/zG4PQQHSu3c5t0W8MSkM4gUgczq8ZQ7cZQbqFVca8gVLVldmwMjPGFh1/SUyEPmHMTTN2/ZK57QNYq1hcIrXM6YUe9s+6VlWaBpR/+Gf3+udmk0/ulA0y9fOFF8i08WBn3",
+  "scale": 0,
+  "dxt:allowlistLastUpdated": "2026-01-07T08:29:57.931Z",
+  "dxt:allowlistEnabled:d42026ef-6be5-4fd9-a350-069e7691d001": false,
+  "dxt:allowlistCache:d42026ef-6be5-4fd9-a350-069e7691d001": "djEwOqa5vvwVXr9qL5a1dSSW272scnQyWCzEiSLvZF8TqPsILOWJMVVTH6A8NmGrBoBtg+VHg+wqooa3jOtUiQ/gQPo/FDGRbTfKvL+jEWaJZqUjKrAOq2s2BtrQNzvlr1AZaVvkBcYYI3pszPbae8o2vph9Wq4ECs+pv8KjAzc+gPXQxQAfcsnIaTsIhF61rf1fdnAH2rKqtOTEn9BSGdh9f15LipAVVYz7Ani9QYF8cp3PPy2INIBX6iFpECN/070nIaaQKSW6xaTfZ4iq6zTEr1aDRj0jtQKQhILPUC43qaY+1PEljXLWW0ITwili4LWahQkrkncoXC8t3C+8TSdun+g4jsJkSrNQWpP1G+xGuty++ymjPAZwl4K6j+PqU0UQ",
+  "hasTrackedInitialActivation": true,
+  "dxt:allowlistEnabled": false,
+  "quickWindowPosition": {
+    "absolutePointInWorkspace": {
+      "x": 876,
+      "y": 384
+    },
+    "monitor": {
+      "accelerometerSupport": "unknown",
+      "bounds": {
+        "height": 1440,
+        "width": 2560,
+        "x": 0,
+        "y": 0
+      },
+      "colorDepth": 24,
+      "colorSpace": "{primaries:BT709, transfer:SRGB, matrix:RGB, range:FULL}",
+      "depthPerComponent": 8,
+      "detected": true,
+      "displayFrequency": 60,
+      "id": 454345417,
+      "internal": false,
+      "label": "R27Q62",
+      "maximumCursorSize": {
+        "height": 0,
+        "width": 0
+      },
+      "monochrome": false,
+      "nativeOrigin": {
+        "x": 0,
+        "y": 0
+      },
+      "rotation": 0,
+      "scaleFactor": 1,
+      "size": {
+        "height": 1440,
+        "width": 2560
+      },
+      "touchSupport": "unknown",
+      "workArea": {
+        "height": 1400,
+        "width": 2560,
+        "x": 0,
+        "y": 0
+      },
+      "workAreaSize": {
+        "height": 1400,
+        "width": 2560
+      }
+    },
+    "relativePointFromMonitor": {
+      "x": 876,
+      "y": 384
+    }
+  },
+  "locale": "en-US"
+}

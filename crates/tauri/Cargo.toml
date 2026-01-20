@@ -1,0 +1,36 @@
+[package]
+name = "claude-config-manager-gui"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+# Core library
+claude-config-manager-core = { path = "../core" }
+
+# Tauri framework
+tauri = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[features]
+# This feature is used for production builds or when a dev server is not specified
+default = ["custom-protocol"]
+
+# Use the Tauri API on all platforms
+custom-protocol = ["tauri/custom-protocol"]

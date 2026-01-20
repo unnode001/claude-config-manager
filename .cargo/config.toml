@@ -1,0 +1,6 @@
+# 构建配置
+[build]
+target = "x86_64-pc-windows-msvc"
+
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld.exe"

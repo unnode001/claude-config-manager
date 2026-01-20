@@ -1,0 +1,44 @@
+# Rust build artifacts
+target/
+debug/
+release/
+
+# Cargo workspace lock file (not needed in workspace root)
+# Each crate manages its own lock file if needed
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.rs.bk
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+tarpaulin-report.html
+cobertura.xml
+lcov.info
+
+# Backup files
+*.bak
+*.backup
+
+# Tauri specific
+src-tauri/target/
+src-tauri/WixTools/
+
+# Node modules (if any frontend development)
+node_modules/
+
+# Build artifacts
+dist/
+build/

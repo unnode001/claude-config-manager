@@ -1,0 +1,42 @@
+[package]
+name = "claude-config-manager"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "ccm"
+path = "src/main.rs"
+
+[dependencies]
+# Core library
+claude-config-manager-core = { path = "../core" }
+
+# CLI framework
+clap = { workspace = true }
+
+# Path handling
+camino = { workspace = true }
+
+# Time handling
+chrono = "0.4"
+
+# Error handling
+anyhow = { workspace = true }
+
+# JSON handling
+serde_json = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[dev-dependencies]
+# Testing
+assert_cmd = "2"
+predicates = "3"
+rstest = { workspace = true }
+tempfile = "3"

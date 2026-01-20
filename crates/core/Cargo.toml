@@ -1,0 +1,34 @@
+[package]
+name = "claude-config-manager-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Path handling
+dirs = { workspace = true }
+camino = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# File system utilities
+tempfile = "3.13"
+
+[dev-dependencies]
+# Testing
+rstest = { workspace = true }
