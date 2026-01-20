@@ -5,3 +5,4 @@
 pub mod config;
 pub mod history;
 pub mod mcp;
+pub mod project;

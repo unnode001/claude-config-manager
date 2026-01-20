@@ -9,6 +9,7 @@ pub mod config;
 pub mod error;
 pub mod mcp;
 pub mod paths;
+pub mod project;
 pub mod types;
 
 // Validation is part of config module
@@ -24,6 +25,7 @@ pub use config::{ClaudeConfig, manager::ConfigManager, merge::merge_configs};
 pub use error::{ConfigError, Result};
 pub use mcp::McpManager;
 pub use paths::{expand_tilde, find_project_config, get_global_config_dir, get_global_config_path};
+pub use project::{ProjectInfo, ProjectScanner};
 pub use types::*;
 
 /// Version information

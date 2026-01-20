@@ -168,6 +168,16 @@ impl From<serde_json::Error> for ConfigError {
     }
 }
 
+impl From<std::io::Error> for ConfigError {
+    fn from(err: std::io::Error) -> Self {
+        ConfigError::Filesystem {
+            operation: "filesystem".to_string(),
+            path: PathBuf::from("unknown"),
+            source: err,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -11,6 +11,7 @@ mod output;
 use commands::config::ConfigArgs;
 use commands::history::HistoryArgs;
 use commands::mcp::McpArgs;
+use commands::project::ProjectArgs;
 
 /// Claude Config Manager - Manage Claude Code configurations
 #[derive(Parser, Debug)]
@@ -36,6 +37,8 @@ enum Commands {
     History(HistoryArgs),
     /// MCP server management commands
     Mcp(McpArgs),
+    /// Project discovery and management commands
+    Project(ProjectArgs),
 }
 
 fn main() -> anyhow::Result<()> {
@@ -63,6 +66,9 @@ fn main() -> anyhow::Result<()> {
         Some(Commands::Mcp(mcp_args)) => {
             mcp_args.execute()?;
         }
+        Some(Commands::Project(project_args)) => {
+            project_args.command.execute()?;
+        }
         None => {
             println!("Claude Config Manager v{}", env!("CARGO_PKG_VERSION"));
             println!("\nUsage: ccm <command> [options]");
@@ -70,6 +76,7 @@ fn main() -> anyhow::Result<()> {
             println!("  config      Configuration management");
             println!("  history     Backup and history management");
             println!("  mcp         MCP server management");
+            println!("  project     Project discovery and management");
             println!("\nRun 'ccm help <command>' for more information.");
         }
     }
