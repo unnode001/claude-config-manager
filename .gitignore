@@ -42,3 +42,11 @@ node_modules/
 # Build artifacts
 dist/
 build/
+
+# Temporary files
+template.zip
+agent-work-report-document/
+
+# Local backups and test data
+.backups/
+test_project/
