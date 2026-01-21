@@ -2,6 +2,7 @@
 //!
 //! Tauri-based desktop application for managing Claude Code configurations.
 
+use crate::commands::config::ConfigState;
 use crate::commands::*;
 
 mod commands;
@@ -11,14 +12,18 @@ pub use tauri;
 
 /// Tauri application entry point
 pub fn run() {
+    let config_state = ConfigState::new();
+
     tauri::Builder::default()
+        .manage(config_state)
         .invoke_handler(tauri::generate_handler![
             // Configuration commands
             commands::config::get_config,
             commands::config::set_config_value,
-            commands::config::diff_configs,
-            commands::config::import_config,
-            commands::config::export_config,
+
+            // Project commands
+            commands::project::list_projects,
+            commands::project::get_project_config,
 
             // MCP server commands
             commands::mcp::list_servers,
@@ -28,21 +33,12 @@ pub fn run() {
             commands::mcp::disable_server,
             commands::mcp::get_server,
 
-            // Project commands
-            commands::project::scan_projects,
-            commands::project::list_projects,
-            commands::project::get_project_config,
-
-            // Search commands
-            commands::search::search_config,
-
             // History commands
             commands::history::list_backups,
             commands::history::restore_backup,
 
             // Utility commands
-            commands::get_global_config_path,
-            commands::get_version,
+            commands::utils::get_global_config_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

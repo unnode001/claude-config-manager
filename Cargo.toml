@@ -2,7 +2,7 @@
 members = [
     "crates/core",
     "crates/cli",
-    # "crates/tauri",  # TODO: Re-enable when starting GUI implementation (Phase 3+)
+    "crates/tauri",
 ]
 resolver = "2"
 

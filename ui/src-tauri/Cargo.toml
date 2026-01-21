@@ -1,0 +1,41 @@
+[workspace]
+
+[package]
+name = "claude-config-manager-gui"
+version = "0.1.0"
+edition = "2021"
+authors = ["Claude Config Manager Contributors"]
+license = "MIT"
+repository = "https://github.com/unnode001/claude-config-manager"
+rust-version = "1.75.0"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+# Core library
+claude-config-manager-core = { path = "../../crates/core" }
+
+# Tauri framework
+tauri = { version = "2.0", features = [] }
+
+# Async runtime
+tokio = { version = "1.38", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Path handling
+dirs = "5"
+
+[features]
+# This feature is used for production builds or when a dev server is not specified
+default = ["custom-protocol"]
+
+# Use the Tauri API on all platforms
+custom-protocol = ["tauri/custom-protocol"]
