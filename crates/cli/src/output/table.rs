@@ -16,10 +16,9 @@ pub fn format_table(config: &ClaudeConfig, key: Option<&str>) -> Result<()> {
 
     if let Some(key_path) = key {
         // Show specific key
-        let value = get_nested_value(&json_value, key_path)
-            .unwrap_or_else(|| Value::Null);
+        let value = get_nested_value(&json_value, key_path).unwrap_or(Value::Null);
 
-        println!("{}:", key_path);
+        println!("{key_path}:");
         print_value(&value, 1);
     } else {
         // Show all configuration
@@ -30,10 +29,10 @@ pub fn format_table(config: &ClaudeConfig, key: Option<&str>) -> Result<()> {
         if let Some(servers) = &config.mcp_servers {
             println!("MCP Servers:");
             for (name, server) in servers {
-                println!("  {}:", name);
+                println!("  {name}:");
                 println!("    Enabled: {}", server.enabled);
                 if let Some(command) = &server.command {
-                    println!("    Command: {}", command);
+                    println!("    Command: {command}");
                 }
                 if !server.args.is_empty() {
                     println!("    Args: {}", server.args.join(" "));
@@ -45,7 +44,7 @@ pub fn format_table(config: &ClaudeConfig, key: Option<&str>) -> Result<()> {
         if let Some(paths) = &config.allowed_paths {
             println!("Allowed Paths:");
             for path in paths {
-                println!("  - {}", path);
+                println!("  - {path}");
             }
             println!();
         }
@@ -53,10 +52,10 @@ pub fn format_table(config: &ClaudeConfig, key: Option<&str>) -> Result<()> {
         if let Some(skills) = &config.skills {
             println!("Skills:");
             for (name, skill) in skills {
-                println!("  {}:", name);
+                println!("  {name}:");
                 println!("    Enabled: {}", skill.enabled);
                 if let Some(params) = &skill.parameters {
-                    println!("    Parameters: {}", params);
+                    println!("    Parameters: {params}");
                 }
             }
             println!();
@@ -74,7 +73,7 @@ pub fn format_table(config: &ClaudeConfig, key: Option<&str>) -> Result<()> {
         if !config.unknown.is_empty() {
             println!("Other Configuration:");
             for (key, value) in &config.unknown {
-                println!("  {}:", key);
+                println!("  {key}:");
                 print_value(value, 2);
             }
         }
@@ -88,10 +87,10 @@ fn print_value(value: &Value, indent: usize) {
     let indent_str = "  ".repeat(indent);
 
     match value {
-        Value::Null => println!("{}null", indent_str),
-        Value::Bool(b) => println!("{}{}", indent_str, b),
-        Value::Number(n) => println!("{}{}", indent_str, n),
-        Value::String(s) => println!("{}{}", indent_str, s),
+        Value::Null => println!("{indent_str}null"),
+        Value::Bool(b) => println!("{indent_str}{b}"),
+        Value::Number(n) => println!("{indent_str}{n}"),
+        Value::String(s) => println!("{indent_str}{s}"),
         Value::Array(arr) => {
             for item in arr {
                 print_value(item, indent);
@@ -99,7 +98,7 @@ fn print_value(value: &Value, indent: usize) {
         }
         Value::Object(obj) => {
             for (key, val) in obj {
-                println!("{}{}:", indent_str, key);
+                println!("{indent_str}{key}:");
                 print_value(val, indent + 1);
             }
         }
@@ -134,8 +133,7 @@ mod tests {
 
     #[test]
     fn test_format_table_full_config() {
-        let config = ClaudeConfig::new()
-            .with_custom_instruction("Be concise");
+        let config = ClaudeConfig::new().with_custom_instruction("Be concise");
 
         // Should not panic
         format_table(&config, None).unwrap();
@@ -143,8 +141,7 @@ mod tests {
 
     #[test]
     fn test_format_table_with_key() {
-        let config = ClaudeConfig::new()
-            .with_custom_instruction("Be concise");
+        let config = ClaudeConfig::new().with_custom_instruction("Be concise");
 
         // Should not panic even with unknown key
         format_table(&config, Some("customInstructions")).unwrap();

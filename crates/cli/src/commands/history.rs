@@ -5,10 +5,7 @@
 use anyhow::Result;
 use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand};
-use claude_config_manager_core::{
-    backup::BackupManager,
-    paths::get_backup_dir,
-};
+use claude_config_manager_core::{backup::BackupManager, paths::get_backup_dir};
 use std::path::PathBuf;
 
 /// History management commands
@@ -34,6 +31,10 @@ pub enum HistoryCommand {
         /// Project path (for project-specific backups)
         #[arg(short, long)]
         project: Option<Utf8PathBuf>,
+
+        /// Show relative timestamps (e.g., "2 hours ago")
+        #[arg(short = 'r', long)]
+        relative: bool,
     },
 
     /// Restore a backup
@@ -62,17 +63,28 @@ impl HistoryCommand {
     /// Execute the history command
     pub fn execute(&self) -> Result<()> {
         match self {
-            HistoryCommand::List { verbose, limit, project } => {
-                self.list_backups(*verbose, *limit, project.as_deref())
-            }
-            HistoryCommand::Restore { backup, project, yes } => {
-                self.restore_backup(backup, project.as_deref(), *yes)
-            }
+            HistoryCommand::List {
+                verbose,
+                limit,
+                project,
+                relative,
+            } => self.list_backups(*verbose, *limit, project.as_deref(), *relative),
+            HistoryCommand::Restore {
+                backup,
+                project,
+                yes,
+            } => self.restore_backup(backup, project.as_deref(), *yes),
         }
     }
 
     /// List available backups
-    fn list_backups(&self, verbose: bool, limit: Option<usize>, project_path: Option<&camino::Utf8Path>) -> Result<()> {
+    fn list_backups(
+        &self,
+        verbose: bool,
+        limit: Option<usize>,
+        project_path: Option<&camino::Utf8Path>,
+        relative: bool,
+    ) -> Result<()> {
         // Determine backup directory
         let backup_dir = if let Some(project) = project_path {
             get_backup_dir().join(project.join(".claude"))
@@ -84,7 +96,10 @@ impl HistoryCommand {
 
         // Determine the original config file path
         let original_file: PathBuf = if let Some(project) = project_path {
-            project.join(".claude").join("config.json").into_std_path_buf()
+            project
+                .join(".claude")
+                .join("config.json")
+                .into_std_path_buf()
         } else {
             // Global config is in parent of backup dir
             backup_dir
@@ -109,16 +124,33 @@ impl HistoryCommand {
             backups.into_iter().collect()
         };
 
-        println!("Backups ({} available, showing {}):\n", total_count, backups_to_show.len());
+        println!(
+            "Backups ({} available, showing {}):\n",
+            total_count,
+            backups_to_show.len()
+        );
 
         for (index, backup) in backups_to_show.iter().enumerate() {
             // Print index for easy reference
             println!("  [{}]  {}", index, backup_path_display(&backup.path));
 
             if verbose {
-                println!("       Created: {}", format_timestamp(&backup.created_at));
+                if relative {
+                    println!(
+                        "       Created: {} ({})",
+                        format_timestamp(&backup.created_at),
+                        format_relative_time(&backup.created_at)
+                    );
+                } else {
+                    println!("       Created: {}", format_timestamp(&backup.created_at));
+                }
                 println!("       Size: {} bytes", backup.size);
                 println!("       Original: {}", backup.original_path);
+            } else if relative {
+                println!(
+                    "       Created: {}",
+                    format_relative_time(&backup.created_at)
+                );
             } else {
                 println!("       Created: {}", format_timestamp(&backup.created_at));
             }
@@ -131,7 +163,12 @@ impl HistoryCommand {
     }
 
     /// Restore a backup
-    fn restore_backup(&self, backup_spec: &str, project_path: Option<&camino::Utf8Path>, yes: bool) -> Result<()> {
+    fn restore_backup(
+        &self,
+        backup_spec: &str,
+        project_path: Option<&camino::Utf8Path>,
+        yes: bool,
+    ) -> Result<()> {
         // Determine backup directory
         let backup_dir = if let Some(project) = project_path {
             get_backup_dir().join(project.join(".claude"))
@@ -143,7 +180,10 @@ impl HistoryCommand {
 
         // Determine the original config file path
         let original_file: PathBuf = if let Some(project) = project_path {
-            project.join(".claude").join("config.json").into_std_path_buf()
+            project
+                .join(".claude")
+                .join("config.json")
+                .into_std_path_buf()
         } else {
             backup_dir
                 .parent()
@@ -157,8 +197,11 @@ impl HistoryCommand {
             let backups = manager.list_backups(original_file.as_ref())?;
 
             if index >= backups.len() {
-                anyhow::bail!("Invalid backup index: {}. Only {} backups available.",
-                    index, backups.len());
+                anyhow::bail!(
+                    "Invalid backup index: {}. Only {} backups available.",
+                    index,
+                    backups.len()
+                );
             }
 
             std::path::PathBuf::from(&backups[index].path)
@@ -196,7 +239,10 @@ impl HistoryCommand {
         // Restore the backup
         let restored_path = manager.restore_backup(&backup_path)?;
 
-        println!("✓ Backup restored successfully: {}", restored_path.display());
+        println!(
+            "✓ Backup restored successfully: {}",
+            restored_path.display()
+        );
 
         Ok(())
     }
@@ -218,4 +264,48 @@ fn backup_path_display(path: &str) -> String {
 fn format_timestamp(dt: &chrono::DateTime<chrono::Utc>) -> String {
     // Format as: 2025-01-20 14:30:45
     dt.format("%Y-%m-%d %H:%M:%S UTC").to_string()
+}
+
+/// Format relative time (e.g., "2 hours ago")
+fn format_relative_time(dt: &chrono::DateTime<chrono::Utc>) -> String {
+    let now = chrono::Utc::now();
+    let duration = now.signed_duration_since(*dt);
+
+    // Handle future timestamps (shouldn't happen in practice)
+    if duration.num_seconds() < 0 {
+        return "in the future".to_string();
+    }
+
+    let seconds = duration.num_seconds();
+
+    if seconds < 60 {
+        return format!("{seconds} seconds ago");
+    }
+
+    let minutes = duration.num_minutes();
+    if minutes < 60 {
+        return format!(
+            "{} minute{} ago",
+            minutes,
+            if minutes == 1 { "" } else { "s" }
+        );
+    }
+
+    let hours = duration.num_hours();
+    if hours < 24 {
+        return format!("{} hour{} ago", hours, if hours == 1 { "" } else { "s" });
+    }
+
+    let days = duration.num_days();
+    if days < 30 {
+        return format!("{} day{} ago", days, if days == 1 { "" } else { "s" });
+    }
+
+    let months = duration.num_days() / 30;
+    if months < 12 {
+        return format!("{} month{} ago", months, if months == 1 { "" } else { "s" });
+    }
+
+    let years = duration.num_days() / 365;
+    format!("{} year{} ago", years, if years == 1 { "" } else { "s" })
 }

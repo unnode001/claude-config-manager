@@ -183,7 +183,15 @@ impl ConfigSearcher {
         let config_value = serde_json::to_value(config)?;
 
         // Search the config
-        self.search_value(query, &config_value, "", &mut results, source, config_path, 0)?;
+        self.search_value(
+            query,
+            &config_value,
+            "",
+            &mut results,
+            source,
+            config_path,
+            0,
+        )?;
 
         Ok(results)
     }
@@ -212,15 +220,15 @@ impl ConfigSearcher {
                     let new_path = if current_path.is_empty() {
                         key.clone()
                     } else {
-                        format!("{}.{}", current_path, key)
+                        format!("{current_path}.{key}")
                     };
 
                     // Search in key if enabled
                     if self.options.search_keys && self.matches(query, key) {
                         results.push(SearchResult::new(
                             new_path.clone(),
-                            format!("<key> {}", key),
-                            source.clone(),
+                            format!("<key> {key}"),
+                            source,
                             config_path.clone(),
                             ValueType::String,
                         ));
@@ -232,7 +240,7 @@ impl ConfigSearcher {
                         val,
                         &new_path,
                         results,
-                        source.clone(),
+                        source,
                         config_path.clone(),
                         depth + 1,
                     )?;
@@ -240,7 +248,7 @@ impl ConfigSearcher {
             }
             Value::Array(arr) => {
                 for (index, val) in arr.iter().enumerate() {
-                    let new_path = format!("{}[{}]", current_path, index);
+                    let new_path = format!("{current_path}[{index}]");
 
                     // Recursively search array elements
                     self.search_value(
@@ -248,7 +256,7 @@ impl ConfigSearcher {
                         val,
                         &new_path,
                         results,
-                        source.clone(),
+                        source,
                         config_path.clone(),
                         depth + 1,
                     )?;
@@ -326,7 +334,6 @@ impl Default for ConfigSearcher {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{McpServer, Skill};
     use std::path::PathBuf;
 
     #[test]
@@ -355,8 +362,10 @@ mod tests {
 
     #[test]
     fn test_search_finds_key() {
-        let config = ClaudeConfig::new()
-            .with_mcp_server("test-server", crate::McpServer::new("npx", "npx", vec!["-y".to_string()]));
+        let config = ClaudeConfig::new().with_mcp_server(
+            "test-server",
+            crate::McpServer::new("npx", "npx", vec!["-y".to_string()]),
+        );
 
         let searcher = ConfigSearcher::new();
         let results = searcher

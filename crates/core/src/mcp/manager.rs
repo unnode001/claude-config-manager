@@ -5,9 +5,9 @@
 
 use crate::{
     error::{ConfigError, Result},
+    paths::get_global_config_path,
     types::{ConfigScope, McpServer},
     ConfigManager,
-    paths::get_global_config_path,
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -42,7 +42,10 @@ impl McpManager {
     /// * `backup_dir` - Directory to store backups
     /// * `custom_global_config` - Custom path for global config
     #[cfg(test)]
-    pub fn with_custom_global_config(backup_dir: impl Into<PathBuf>, custom_global_config: impl Into<PathBuf>) -> Self {
+    pub fn with_custom_global_config(
+        backup_dir: impl Into<PathBuf>,
+        custom_global_config: impl Into<PathBuf>,
+    ) -> Self {
         Self {
             config_manager: ConfigManager::new(backup_dir),
             custom_global_config: Some(custom_global_config.into()),
@@ -131,9 +134,7 @@ impl McpManager {
 
         // Check if server exists
         let servers = config.mcp_servers.as_ref().ok_or_else(|| {
-            ConfigError::Generic(format!(
-                "No MCP servers configured. Use 'add' command first."
-            ))
+            ConfigError::Generic("No MCP servers configured. Use 'add' command first.".to_string())
         })?;
 
         if !servers.contains_key(name) {
@@ -152,7 +153,8 @@ impl McpManager {
         }
 
         // Write back
-        self.config_manager.write_config_with_backup(&config_path, &config)?;
+        self.config_manager
+            .write_config_with_backup(&config_path, &config)?;
 
         tracing::info!(
             "MCP server '{}' {}",
@@ -191,7 +193,7 @@ impl McpManager {
             return Err(ConfigError::validation_failed(
                 "Server name cannot be empty",
                 "name is empty",
-                "provide a non-empty server name"
+                "provide a non-empty server name",
             ));
         }
 
@@ -209,8 +211,7 @@ impl McpManager {
         let servers = config.mcp_servers.as_mut().unwrap();
         if servers.contains_key(name) {
             return Err(ConfigError::Generic(format!(
-                "MCP server '{}' already exists. Use 'remove' command first or 'set' to modify.",
-                name
+                "MCP server '{name}' already exists. Use 'remove' command first or 'set' to modify."
             )));
         }
 
@@ -218,7 +219,8 @@ impl McpManager {
         servers.insert(name.to_string(), server);
 
         // Write back
-        self.config_manager.write_config_with_backup(&config_path, &config)?;
+        self.config_manager
+            .write_config_with_backup(&config_path, &config)?;
 
         tracing::info!("MCP server '{}' added", name);
 
@@ -249,8 +251,7 @@ impl McpManager {
         // Check if servers exist
         let servers = config.mcp_servers.as_mut().ok_or_else(|| {
             ConfigError::Generic(format!(
-                "No MCP servers configured. Cannot remove '{}'.",
-                name
+                "No MCP servers configured. Cannot remove '{name}'."
             ))
         })?;
 
@@ -272,7 +273,8 @@ impl McpManager {
         }
 
         // Write back
-        self.config_manager.write_config_with_backup(&config_path, &config)?;
+        self.config_manager
+            .write_config_with_backup(&config_path, &config)?;
 
         tracing::info!("MCP server '{}' removed", name);
 
@@ -439,11 +441,13 @@ mod tests {
             .unwrap();
 
         // Enable server
-        manager.enable_server("test", &ConfigScope::Global, None).unwrap();
+        manager
+            .enable_server("test", &ConfigScope::Global, None)
+            .unwrap();
 
         // Check enabled
         let servers = manager.list_servers(&ConfigScope::Global, None).unwrap();
-        assert_eq!(servers["test"].enabled, true);
+        assert!(servers["test"].enabled);
 
         // Disable server
         manager
@@ -452,7 +456,7 @@ mod tests {
 
         // Check disabled
         let servers = manager.list_servers(&ConfigScope::Global, None).unwrap();
-        assert_eq!(servers["test"].enabled, false);
+        assert!(!servers["test"].enabled);
     }
 
     // TDD Test 5: Enable non-existent server fails
@@ -481,7 +485,9 @@ mod tests {
             .unwrap();
 
         // Remove server
-        manager.remove_server("test", &ConfigScope::Global, None).unwrap();
+        manager
+            .remove_server("test", &ConfigScope::Global, None)
+            .unwrap();
 
         // Verify removed
         let servers = manager.list_servers(&ConfigScope::Global, None).unwrap();
@@ -514,7 +520,9 @@ mod tests {
             .unwrap();
 
         // Get server
-        let retrieved = manager.get_server("test", &ConfigScope::Global, None).unwrap();
+        let retrieved = manager
+            .get_server("test", &ConfigScope::Global, None)
+            .unwrap();
 
         assert_eq!(retrieved.command, Some("npx".to_string()));
         assert_eq!(retrieved.args, vec!["-y".to_string()]);
@@ -534,7 +542,12 @@ mod tests {
         // Add project-scoped server
         let server = McpServer::new("project-server", "uvx", vec![]);
         manager
-            .add_server("project-server", server, &ConfigScope::Project, Some(&project_dir))
+            .add_server(
+                "project-server",
+                server,
+                &ConfigScope::Project,
+                Some(&project_dir),
+            )
             .unwrap();
 
         // List project servers
@@ -555,6 +568,9 @@ mod tests {
         let result = manager.list_servers(&ConfigScope::Project, None);
 
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Project path required"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Project path required"));
     }
 }

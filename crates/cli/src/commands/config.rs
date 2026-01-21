@@ -5,13 +5,10 @@
 use crate::key_path::set_value_by_path;
 use crate::output::{format_json, format_table};
 use anyhow::Result;
-use claude_config_manager_core::{
-    ConfigManager,
-    ConfigDiff,
-    ConfigScope,
-    paths::get_global_config_path,
-};
 use clap::Parser;
+use claude_config_manager_core::{
+    paths::get_global_config_path, ConfigDiff, ConfigManager, ConfigScope,
+};
 use std::path::PathBuf;
 
 /// Configuration management commands
@@ -90,7 +87,10 @@ impl ConfigArgs {
             ConfigCommand::Export { output_file } => {
                 self.cmd_export(output_file)?;
             }
-            ConfigCommand::Import { input_file, no_validate } => {
+            ConfigCommand::Import {
+                input_file,
+                no_validate,
+            } => {
                 self.cmd_import(input_file, !no_validate)?;
             }
         }
@@ -159,7 +159,10 @@ impl ConfigArgs {
         // Success message
         if config_path.exists() {
             println!("Configuration updated successfully.");
-            println!("Backup created at: {:?}", manager.backup_manager().list_backups(&config_path)?.last());
+            println!(
+                "Backup created at: {:?}",
+                manager.backup_manager().list_backups(&config_path)?.last()
+            );
         }
 
         Ok(())
@@ -213,7 +216,7 @@ impl ConfigArgs {
             println!("Additions (project-specific):");
             for diff in additions {
                 if let ConfigDiff::Added { key_path, value } = diff {
-                    println!("  + {}", key_path);
+                    println!("  + {key_path}");
                     if matches!(self.output, OutputFormat::Json) {
                         println!("    {}", serde_json::to_string_pretty(value)?);
                     }
@@ -227,7 +230,7 @@ impl ConfigArgs {
             println!("Removals (missing in project):");
             for diff in removals {
                 if let ConfigDiff::Removed { key_path, .. } = diff {
-                    println!("  - {}", key_path);
+                    println!("  - {key_path}");
                 }
             }
             println!();
@@ -237,8 +240,13 @@ impl ConfigArgs {
         if !modifications.is_empty() {
             println!("Modifications (different values):");
             for diff in modifications {
-                if let ConfigDiff::Modified { key_path, old_value, new_value } = diff {
-                    println!("  ~ {}", key_path);
+                if let ConfigDiff::Modified {
+                    key_path,
+                    old_value,
+                    new_value,
+                } = diff
+                {
+                    println!("  ~ {key_path}");
                     if matches!(self.output, OutputFormat::Json) {
                         println!("    old: {}", serde_json::to_string_pretty(old_value)?);
                         println!("    new: {}", serde_json::to_string_pretty(new_value)?);
@@ -252,14 +260,14 @@ impl ConfigArgs {
         println!("Source summary:");
         let mut global_count = 0;
         let mut project_count = 0;
-        for (_key, scope) in &source_map.sources {
+        for scope in source_map.sources.values() {
             match scope {
                 ConfigScope::Global => global_count += 1,
                 ConfigScope::Project => project_count += 1,
             }
         }
-        println!("  Values from global: {}", global_count);
-        println!("  Values from project: {}", project_count);
+        println!("  Values from global: {global_count}");
+        println!("  Values from project: {project_count}");
 
         Ok(())
     }

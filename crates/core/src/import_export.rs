@@ -3,10 +3,10 @@
 //! Provides functionality to export configurations to files
 //! and import configurations from files with validation.
 
-use crate::{config::ClaudeConfig, error::Result, error::ConfigError};
-use std::path::{Path, PathBuf};
+use crate::{config::ClaudeConfig, error::ConfigError, error::Result};
 use std::fs;
 use std::io::Write;
+use std::path::{Path, PathBuf};
 
 /// Supported export formats
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -88,9 +88,8 @@ impl ConfigImporter {
         // Create parent directory if it doesn't exist
         if let Some(parent) = path.parent() {
             if !parent.exists() {
-                fs::create_dir_all(parent).map_err(|e| {
-                    ConfigError::filesystem("create export directory", parent, e)
-                })?;
+                fs::create_dir_all(parent)
+                    .map_err(|e| ConfigError::filesystem("create export directory", parent, e))?;
             }
         }
 
@@ -112,16 +111,14 @@ impl ConfigImporter {
                 ));
             }
         }
-        .map_err(|e| ConfigError::Generic(format!("Serialization failed: {}", e)))?;
+        .map_err(|e| ConfigError::Generic(format!("Serialization failed: {e}")))?;
 
         // Write to file
-        let mut file = fs::File::create(path).map_err(|e| {
-            ConfigError::filesystem("create export file", path, e)
-        })?;
+        let mut file = fs::File::create(path)
+            .map_err(|e| ConfigError::filesystem("create export file", path, e))?;
 
-        file.write_all(content.as_bytes()).map_err(|e| {
-            ConfigError::filesystem("write export file", path, e)
-        })?;
+        file.write_all(content.as_bytes())
+            .map_err(|e| ConfigError::filesystem("write export file", path, e))?;
 
         tracing::info!("Exported configuration to: {}", path.display());
 
@@ -143,32 +140,23 @@ impl ConfigImporter {
     /// - File cannot be read
     /// - Deserialization fails
     /// - Validation fails (if enabled)
-    pub fn import_config(
-        path: &Path,
-        options: &ImportExportOptions,
-    ) -> Result<ClaudeConfig> {
+    pub fn import_config(path: &Path, options: &ImportExportOptions) -> Result<ClaudeConfig> {
         // Check file exists
         if !path.exists() {
             return Err(ConfigError::not_found(path));
         }
 
         // Read file content
-        let content = fs::read_to_string(path).map_err(|e| {
-            ConfigError::filesystem("read import file", path, e)
-        })?;
+        let content = fs::read_to_string(path)
+            .map_err(|e| ConfigError::filesystem("read import file", path, e))?;
 
         // Detect format from path if not specified
-        let format = ExportFormat::from_path(path)
-            .unwrap_or(options.format);
+        let format = ExportFormat::from_path(path).unwrap_or(options.format);
 
         // Deserialize based on format
         let config = match format {
-            ExportFormat::Json => {
-                serde_json::from_str(&content)
-                    .map_err(|e| {
-                        ConfigError::Generic(format!("Failed to parse JSON: {}", e))
-                    })?
-            }
+            ExportFormat::Json => serde_json::from_str(&content)
+                .map_err(|e| ConfigError::Generic(format!("Failed to parse JSON: {e}")))?,
             ExportFormat::Toml => {
                 return Err(ConfigError::validation_failed(
                     "ImportFormat",
@@ -221,8 +209,14 @@ mod tests {
         let toml_path = PathBuf::from("/test/config.toml");
         let txt_path = PathBuf::from("/test/config.txt");
 
-        assert_eq!(ExportFormat::from_path(&json_path), Some(ExportFormat::Json));
-        assert_eq!(ExportFormat::from_path(&toml_path), Some(ExportFormat::Toml));
+        assert_eq!(
+            ExportFormat::from_path(&json_path),
+            Some(ExportFormat::Json)
+        );
+        assert_eq!(
+            ExportFormat::from_path(&toml_path),
+            Some(ExportFormat::Toml)
+        );
         assert_eq!(ExportFormat::from_path(&txt_path), None);
     }
 
@@ -257,7 +251,11 @@ mod tests {
     #[test]
     fn test_export_creates_directory() {
         let temp_dir = TempDir::new().unwrap();
-        let nested_path = temp_dir.path().join("nested").join("dir").join("config.json");
+        let nested_path = temp_dir
+            .path()
+            .join("nested")
+            .join("dir")
+            .join("config.json");
 
         let config = ClaudeConfig::new();
         let result = ConfigImporter::export(&config, &nested_path);

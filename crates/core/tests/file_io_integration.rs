@@ -33,7 +33,9 @@ fn test_full_read_modify_write_cycle() {
     config = config.with_mcp_server("uvx", server);
 
     // Write back
-    manager.write_config_with_backup(&config_path, &config).unwrap();
+    manager
+        .write_config_with_backup(&config_path, &config)
+        .unwrap();
 
     // Verify file was updated
     let updated_content = fs::read_to_string(&config_path).unwrap();
@@ -79,8 +81,8 @@ fn test_large_config_handling() {
     // Create large config (simulate many MCP servers)
     let mut config = claude_config_manager_core::ClaudeConfig::new();
     for i in 0..100 {
-        let server = McpServer::new(&format!("server-{}", i), "cmd", vec![]);
-        config = config.with_mcp_server(&format!("server-{}", i), server);
+        let server = McpServer::new(format!("server-{i}"), "cmd", vec![]);
+        config = config.with_mcp_server(format!("server-{i}"), server);
     }
 
     // Write large config
@@ -92,10 +94,7 @@ fn test_large_config_handling() {
     let read_config = manager.read_config(&config_path).unwrap();
 
     // Verify all servers present
-    assert_eq!(
-        read_config.mcp_servers.as_ref().unwrap().len(),
-        100
-    );
+    assert_eq!(read_config.mcp_servers.as_ref().unwrap().len(), 100);
 }
 
 #[test]
@@ -154,8 +153,8 @@ fn test_atomic_write_crash_recovery() {
     let manager = ConfigManager::new(&backup_dir);
 
     // Create original config
-    let original = claude_config_manager_core::ClaudeConfig::new()
-        .with_custom_instruction("Original content");
+    let original =
+        claude_config_manager_core::ClaudeConfig::new().with_custom_instruction("Original content");
     manager
         .write_config_with_backup(&config_path, &original)
         .unwrap();
@@ -163,10 +162,7 @@ fn test_atomic_write_crash_recovery() {
     // Simulate a failed write by trying to write invalid config
     let mut invalid_config = claude_config_manager_core::ClaudeConfig::new();
     let mut servers = std::collections::HashMap::new();
-    servers.insert(
-        "".to_string(),
-        McpServer::new("", "npx", vec![]),
-    );
+    servers.insert("".to_string(), McpServer::new("", "npx", vec![]));
     invalid_config.mcp_servers = Some(servers);
 
     // This should fail validation
@@ -175,10 +171,7 @@ fn test_atomic_write_crash_recovery() {
 
     // Verify original file intact (crash recovery)
     let recovered = manager.read_config(&config_path).unwrap();
-    assert_eq!(
-        recovered.custom_instructions,
-        original.custom_instructions
-    );
+    assert_eq!(recovered.custom_instructions, original.custom_instructions);
 }
 
 #[test]
@@ -211,5 +204,8 @@ fn test_backup_cleanup_after_many_writes() {
 
     // Verify cleanup worked
     let backups = manager.backup_manager().list_backups(&config_path).unwrap();
-    assert!(backups.len() <= 10, "Should not exceed retention count after cleanup");
+    assert!(
+        backups.len() <= 10,
+        "Should not exceed retention count after cleanup"
+    );
 }

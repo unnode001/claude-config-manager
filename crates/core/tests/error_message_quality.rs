@@ -2,7 +2,7 @@
 //!
 //! Verifies that error messages are clear, actionable, and user-friendly
 
-use claude_config_manager_core::{ConfigManager, ClaudeConfig};
+use claude_config_manager_core::{ClaudeConfig, ConfigManager};
 use std::fs;
 use tempfile::TempDir;
 
@@ -110,7 +110,8 @@ fn test_error_messages_avoid_technical_jargon() {
 #[test]
 fn test_error_message_backup_failed_emphasizes_safety() {
     let io_error = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "Access denied");
-    let error = claude_config_manager_core::ConfigError::backup_failed("/test/config.json", io_error);
+    let error =
+        claude_config_manager_core::ConfigError::backup_failed("/test/config.json", io_error);
 
     let error_msg = error.to_string();
 
@@ -183,16 +184,16 @@ fn test_all_errors_are_user_friendly() {
         // All errors should provide actionable guidance
         assert!(
             msg.contains("Suggestion") || msg.contains("Tip") || msg.contains("Try"),
-            "Error message should include guidance: {}",
-            msg
+            "Error message should include guidance: {msg}"
         );
     }
 }
 
 #[test]
 fn test_backup_error_shows_operation_was_aborted() {
-    let io_error = std::io::Error::new(std::io::ErrorKind::Other, "Backup failed");
-    let error = claude_config_manager_core::ConfigError::backup_failed("/test/config.json", io_error);
+    let io_error = std::io::Error::other("Backup failed");
+    let error =
+        claude_config_manager_core::ConfigError::backup_failed("/test/config.json", io_error);
 
     let error_msg = error.to_string();
 

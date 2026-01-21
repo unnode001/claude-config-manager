@@ -123,10 +123,10 @@ pub fn expand_tilde(path: &Path) -> PathBuf {
     // Convert to string for processing
     let path_str = path.to_string_lossy();
 
-    if path_str.starts_with('~') {
+    if let Some(rest) = path_str.strip_prefix('~') {
         // Replace ~ with home directory
         if let Some(home) = dirs::home_dir() {
-            let rest = &path_str[1..]; // Skip ~
+            // Skip ~
             return home.join(rest.trim_start_matches('/'));
         }
     }

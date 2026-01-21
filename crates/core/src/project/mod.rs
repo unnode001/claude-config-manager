@@ -6,8 +6,8 @@
 
 use crate::{error::Result, paths::find_project_config};
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 /// Information about a discovered project
@@ -80,7 +80,8 @@ pub struct ProjectScanner {
     /// Paths to ignore during scan
     ignore_paths: Vec<String>,
 
-    /// Whether to use parallel traversal
+    /// Whether to use parallel traversal (reserved for future use)
+    #[allow(dead_code)]
     parallel: bool,
 }
 
@@ -134,7 +135,12 @@ impl ProjectScanner {
     }
 
     /// Recursive directory scanning
-    fn scan_recursive(&self, dir: &Path, depth: usize, projects: &mut Vec<ProjectInfo>) -> Result<()> {
+    fn scan_recursive(
+        &self,
+        dir: &Path,
+        depth: usize,
+        projects: &mut Vec<ProjectInfo>,
+    ) -> Result<()> {
         // Check depth limit
         if let Some(max) = self.max_depth {
             if depth >= max {
@@ -158,11 +164,9 @@ impl ProjectScanner {
             }
 
             // Skip if in ignore list
-            let file_name = path.file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("");
+            let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-            if self.should_ignore(&file_name) {
+            if self.should_ignore(file_name) {
                 continue;
             }
 
@@ -198,8 +202,8 @@ impl Default for ProjectScanner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use std::fs;
+    use tempfile::TempDir;
 
     // TDD Test 1: Scanner finds project with .claude directory
     #[test]
@@ -237,9 +241,12 @@ mod tests {
 
         // Scan with depth 2 - should not find level3
         let scanner = ProjectScanner::new(Some(2), false);
-        let results = scanner.scan_directory(&temp_dir.path()).unwrap();
+        let results = scanner.scan_directory(temp_dir.path()).unwrap();
 
-        assert!(results.is_empty(), "Should not find project beyond max depth");
+        assert!(
+            results.is_empty(),
+            "Should not find project beyond max depth"
+        );
     }
 
     // TDD Test 3: Scanner ignores common directories
@@ -262,7 +269,7 @@ mod tests {
 
         // Scan
         let scanner = ProjectScanner::default();
-        let results = scanner.scan_directory(&root).unwrap();
+        let results = scanner.scan_directory(root).unwrap();
 
         // Should find my-project but not nested in node_modules
         assert_eq!(results.len(), 1);
@@ -279,7 +286,7 @@ mod tests {
         fs::create_dir(&empty_dir).unwrap();
 
         let scanner = ProjectScanner::default();
-        let results = scanner.scan_directory(&temp_dir.path()).unwrap();
+        let results = scanner.scan_directory(temp_dir.path()).unwrap();
 
         assert!(results.is_empty());
     }
@@ -291,14 +298,14 @@ mod tests {
 
         // Create multiple projects
         for i in 0..3 {
-            let project_dir = temp_dir.path().join(format!("project-{}", i));
+            let project_dir = temp_dir.path().join(format!("project-{i}"));
             let claude_dir = project_dir.join(".claude");
             fs::create_dir_all(&claude_dir).unwrap();
             fs::write(claude_dir.join("config.json"), r#"{"project": i}"#).unwrap();
         }
 
         let scanner = ProjectScanner::new(None, false);
-        let results = scanner.scan_directory(&temp_dir.path()).unwrap();
+        let results = scanner.scan_directory(temp_dir.path()).unwrap();
 
         assert_eq!(results.len(), 3);
     }

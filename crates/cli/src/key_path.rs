@@ -60,9 +60,9 @@ fn set_mcp_server_value(config: &mut ClaudeConfig, keys: &[&str], value: Value) 
     let servers = config.mcp_servers.get_or_insert_with(Default::default);
 
     // Get or create the server
-    let server = servers.entry(server_name.to_string()).or_insert_with(|| {
-        claude_config_manager_core::McpServer::new(server_name, "", vec![])
-    });
+    let server = servers
+        .entry(server_name.to_string())
+        .or_insert_with(|| claude_config_manager_core::McpServer::new(server_name, "", vec![]));
 
     // Set the specific field
     if keys.len() == 1 {
@@ -77,9 +77,9 @@ fn set_mcp_server_value(config: &mut ClaudeConfig, keys: &[&str], value: Value) 
             if let Some(bool_val) = value.as_bool() {
                 server.enabled = bool_val;
             } else if let Some(string_val) = value.as_str() {
-                server.enabled = string_val.eq_ignore_ascii_case("true") ||
-                               string_val.eq_ignore_ascii_case("yes") ||
-                               string_val == "1";
+                server.enabled = string_val.eq_ignore_ascii_case("true")
+                    || string_val.eq_ignore_ascii_case("yes")
+                    || string_val == "1";
             } else {
                 anyhow::bail!("'enabled' must be a boolean value");
             }
@@ -94,7 +94,8 @@ fn set_mcp_server_value(config: &mut ClaudeConfig, keys: &[&str], value: Value) 
         "args" => {
             match value {
                 Value::Array(arr) => {
-                    server.args = arr.iter()
+                    server.args = arr
+                        .iter()
                         .filter_map(|v| v.as_str().map(|s| s.to_string()))
                         .collect();
                 }
@@ -108,7 +109,7 @@ fn set_mcp_server_value(config: &mut ClaudeConfig, keys: &[&str], value: Value) 
             }
         }
         _ => {
-            anyhow::bail!("Unknown MCP server field: '{}'", field);
+            anyhow::bail!("Unknown MCP server field: '{field}'");
         }
     }
 
@@ -126,7 +127,7 @@ fn set_allowed_paths_value(config: &mut ClaudeConfig, keys: &[&str], value: Valu
             config.allowed_paths = Some(
                 arr.iter()
                     .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                    .collect()
+                    .collect(),
             );
         }
         Value::String(s) => {
@@ -152,13 +153,14 @@ fn set_skill_value(config: &mut ClaudeConfig, keys: &[&str], value: Value) -> Re
     let skills = config.skills.get_or_insert_with(Default::default);
 
     // Get or create the skill
-    let skill = skills.entry(skill_name.to_string()).or_insert_with(|| {
-        claude_config_manager_core::Skill {
-            name: skill_name.to_string(),
-            enabled: true,
-            parameters: None,
-        }
-    });
+    let skill =
+        skills
+            .entry(skill_name.to_string())
+            .or_insert_with(|| claude_config_manager_core::Skill {
+                name: skill_name.to_string(),
+                enabled: true,
+                parameters: None,
+            });
 
     // Set the specific field
     if keys.len() == 1 {
@@ -173,9 +175,9 @@ fn set_skill_value(config: &mut ClaudeConfig, keys: &[&str], value: Value) -> Re
             if let Some(bool_val) = value.as_bool() {
                 skill.enabled = bool_val;
             } else if let Some(string_val) = value.as_str() {
-                skill.enabled = string_val.eq_ignore_ascii_case("true") ||
-                               string_val.eq_ignore_ascii_case("yes") ||
-                               string_val == "1";
+                skill.enabled = string_val.eq_ignore_ascii_case("true")
+                    || string_val.eq_ignore_ascii_case("yes")
+                    || string_val == "1";
             } else {
                 anyhow::bail!("'enabled' must be a boolean value");
             }
@@ -184,7 +186,7 @@ fn set_skill_value(config: &mut ClaudeConfig, keys: &[&str], value: Value) -> Re
             skill.parameters = Some(value);
         }
         _ => {
-            anyhow::bail!("Unknown skill field: '{}'", field);
+            anyhow::bail!("Unknown skill field: '{field}'");
         }
     }
 
@@ -192,7 +194,11 @@ fn set_skill_value(config: &mut ClaudeConfig, keys: &[&str], value: Value) -> Re
 }
 
 /// Set a value in the customInstructions section
-fn set_custom_instruction_value(config: &mut ClaudeConfig, keys: &[&str], value: Value) -> Result<()> {
+fn set_custom_instruction_value(
+    config: &mut ClaudeConfig,
+    keys: &[&str],
+    value: Value,
+) -> Result<()> {
     if !keys.is_empty() {
         anyhow::bail!("Nested paths in customInstructions are not supported");
     }
@@ -201,7 +207,8 @@ fn set_custom_instruction_value(config: &mut ClaudeConfig, keys: &[&str], value:
 
     match value {
         Value::Array(arr) => {
-            *instructions = arr.iter()
+            *instructions = arr
+                .iter()
                 .filter_map(|v| v.as_str().map(|s| s.to_string()))
                 .collect();
         }
@@ -235,7 +242,6 @@ fn set_unknown_value(config: &mut ClaudeConfig, keys: &[&str], value: Value) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use claude_config_manager_core::McpServer;
 
     #[test]
     fn test_parse_value_json() {
@@ -268,7 +274,7 @@ mod tests {
         let servers = config.mcp_servers.unwrap();
         assert!(servers.contains_key("npx"));
         let server = servers.get("npx").unwrap();
-        assert_eq!(server.enabled, true);
+        assert!(server.enabled);
     }
 
     #[test]
@@ -312,7 +318,7 @@ mod tests {
         let skills = config.skills.unwrap();
         assert!(skills.contains_key("code-review"));
         let skill = skills.get("code-review").unwrap();
-        assert_eq!(skill.enabled, false);
+        assert!(!skill.enabled);
     }
 
     #[test]
@@ -321,7 +327,10 @@ mod tests {
         set_value_by_path(&mut config, "myField", "myValue").unwrap();
 
         assert!(config.unknown.contains_key("myField"));
-        assert_eq!(config.unknown.get("myField"), Some(&Value::String("myValue".to_string())));
+        assert_eq!(
+            config.unknown.get("myField"),
+            Some(&Value::String("myValue".to_string()))
+        );
     }
 
     #[test]
@@ -338,7 +347,12 @@ mod tests {
     #[test]
     fn test_set_mcp_server_args_array() {
         let mut config = ClaudeConfig::new();
-        set_value_by_path(&mut config, "mcpServers.npx.args", "[\"-y\", \"--registry\", \"https://registry.npmjs.org\"]").unwrap();
+        set_value_by_path(
+            &mut config,
+            "mcpServers.npx.args",
+            "[\"-y\", \"--registry\", \"https://registry.npmjs.org\"]",
+        )
+        .unwrap();
 
         assert!(config.mcp_servers.is_some());
         let servers = config.mcp_servers.unwrap();
@@ -349,7 +363,12 @@ mod tests {
     #[test]
     fn test_set_mcp_server_args_string() {
         let mut config = ClaudeConfig::new();
-        set_value_by_path(&mut config, "mcpServers.npx.args", "-y --registry https://registry.npmjs.org").unwrap();
+        set_value_by_path(
+            &mut config,
+            "mcpServers.npx.args",
+            "-y --registry https://registry.npmjs.org",
+        )
+        .unwrap();
 
         assert!(config.mcp_servers.is_some());
         let servers = config.mcp_servers.unwrap();

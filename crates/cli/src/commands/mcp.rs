@@ -3,8 +3,8 @@
 //! Implements `mcp list`, `mcp enable`, `mcp disable`, `mcp add`, `mcp remove`, and `mcp show` commands
 
 use anyhow::Result;
-use claude_config_manager_core::{McpManager, ConfigScope, McpServer};
 use clap::Parser;
+use claude_config_manager_core::{ConfigScope, McpManager, McpServer};
 use std::path::{Path, PathBuf};
 
 /// MCP server management commands
@@ -80,7 +80,12 @@ impl McpArgs {
             McpCommand::Disable { name } => {
                 self.cmd_disable(name)?;
             }
-            McpCommand::Add { name, command, args, env } => {
+            McpCommand::Add {
+                name,
+                command,
+                args,
+                env,
+            } => {
                 self.cmd_add(name, command, args, env)?;
             }
             McpCommand::Remove { name } => {
@@ -130,9 +135,12 @@ impl McpArgs {
         println!("MCP Servers ({}):\n", servers.len());
 
         for (name, server) in servers.iter() {
-            println!("  {}:", name);
+            println!("  {name}:");
             println!("    Enabled: {}", if server.enabled { "yes" } else { "no" });
-            println!("    Command: {}", server.command.as_deref().unwrap_or(&"(default)".to_string()));
+            println!(
+                "    Command: {}",
+                server.command.as_deref().unwrap_or("(default)")
+            );
 
             if !server.args.is_empty() {
                 println!("    Args: {}", server.args.join(" "));
@@ -141,7 +149,7 @@ impl McpArgs {
             if !server.env.is_empty() {
                 println!("    Env:");
                 for (key, value) in &server.env {
-                    println!("      {}={}", key, value);
+                    println!("      {key}={value}");
                 }
             }
 
@@ -164,7 +172,7 @@ impl McpArgs {
         let manager = McpManager::new(&backup_dir);
         manager.enable_server(name, &scope, project_path)?;
 
-        println!("MCP server '{}' enabled successfully.", name);
+        println!("MCP server '{name}' enabled successfully.");
         Ok(())
     }
 
@@ -177,7 +185,7 @@ impl McpArgs {
         let manager = McpManager::new(&backup_dir);
         manager.disable_server(name, &scope, project_path)?;
 
-        println!("MCP server '{}' disabled successfully.", name);
+        println!("MCP server '{name}' disabled successfully.");
         Ok(())
     }
 
@@ -210,7 +218,7 @@ impl McpArgs {
         let manager = McpManager::new(&backup_dir);
         manager.add_server(name, server, &scope, project_path)?;
 
-        println!("MCP server '{}' added successfully.", name);
+        println!("MCP server '{name}' added successfully.");
         Ok(())
     }
 
@@ -223,7 +231,7 @@ impl McpArgs {
         let manager = McpManager::new(&backup_dir);
         manager.remove_server(name, &scope, project_path)?;
 
-        println!("MCP server '{}' removed successfully.", name);
+        println!("MCP server '{name}' removed successfully.");
         Ok(())
     }
 
@@ -236,26 +244,31 @@ impl McpArgs {
         let manager = McpManager::new(&backup_dir);
         let server = manager.get_server(name, &scope, project_path)?;
 
-        println!("Server: {}", name);
+        println!("Server: {name}");
         println!("  Enabled: {}", if server.enabled { "yes" } else { "no" });
-        println!("  Command: {}", server.command.as_deref().unwrap_or(&"(default)".to_string()));
+        println!(
+            "  Command: {}",
+            server.command.as_deref().unwrap_or("(default)")
+        );
 
         let args_str = if server.args.is_empty() {
             "(none)".to_string()
         } else {
             server.args.join(" ")
         };
-        println!("  Args: {}", args_str);
+        println!("  Args: {args_str}");
 
         let env_str = if server.env.is_empty() {
             "(none)".to_string()
         } else {
-            server.env.iter()
-                .map(|(k, v)| format!("{}={}", k, v))
+            server
+                .env
+                .iter()
+                .map(|(k, v)| format!("{k}={v}"))
                 .collect::<Vec<_>>()
                 .join(", ")
         };
-        println!("  Environment: {}", env_str);
+        println!("  Environment: {env_str}");
 
         Ok(())
     }

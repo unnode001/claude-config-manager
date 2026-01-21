@@ -84,8 +84,8 @@ pub fn merge_configs(base_config: &ClaudeConfig, override_config: &ClaudeConfig)
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::McpServer;
     use crate::types::Skill;
+    use crate::McpServer;
 
     // TDD Test 1: Empty configs merge to empty config
     #[test]
@@ -104,11 +104,10 @@ mod tests {
     // TDD Test 2: Deep merge MCP servers
     #[test]
     fn test_deep_merge_mcp_servers() {
-        let base = ClaudeConfig::new()
-            .with_mcp_server("npx", McpServer::new("npx", "npx", vec![]));
+        let base = ClaudeConfig::new().with_mcp_server("npx", McpServer::new("npx", "npx", vec![]));
 
-        let override_config = ClaudeConfig::new()
-            .with_mcp_server("uvx", McpServer::new("uvx", "uvx", vec![]));
+        let override_config =
+            ClaudeConfig::new().with_mcp_server("uvx", McpServer::new("uvx", "uvx", vec![]));
 
         let merged = merge_configs(&base, &override_config);
 
@@ -125,8 +124,8 @@ mod tests {
         let base = ClaudeConfig::new()
             .with_mcp_server("npx", McpServer::new("npx", "npx", vec!["-y".to_string()]));
 
-        let override_config = ClaudeConfig::new()
-            .with_mcp_server("npx", McpServer::new("npx", "npx", vec![]));
+        let override_config =
+            ClaudeConfig::new().with_mcp_server("npx", McpServer::new("npx", "npx", vec![]));
 
         let merged = merge_configs(&base, &override_config);
 
@@ -143,8 +142,7 @@ mod tests {
             .with_allowed_path("~/projects/base")
             .with_allowed_path("~/work/base");
 
-        let override_config = ClaudeConfig::new()
-            .with_allowed_path("~/projects/override");
+        let override_config = ClaudeConfig::new().with_allowed_path("~/projects/override");
 
         let merged = merge_configs(&base, &override_config);
 
@@ -157,8 +155,7 @@ mod tests {
     // TDD Test 5: Empty override keeps base arrays
     #[test]
     fn test_empty_override_keeps_base_arrays() {
-        let base = ClaudeConfig::new()
-            .with_allowed_path("~/projects");
+        let base = ClaudeConfig::new().with_allowed_path("~/projects");
 
         let override_config = ClaudeConfig::new();
 
@@ -170,25 +167,23 @@ mod tests {
     // TDD Test 6: Deep merge skills
     #[test]
     fn test_deep_merge_skills() {
-        let base = ClaudeConfig::new()
-            .with_skill(
-                "code-review",
-                Skill {
-                    name: "code-review".to_string(),
-                    enabled: true,
-                    parameters: None,
-                },
-            );
+        let base = ClaudeConfig::new().with_skill(
+            "code-review",
+            Skill {
+                name: "code-review".to_string(),
+                enabled: true,
+                parameters: None,
+            },
+        );
 
-        let override_config = ClaudeConfig::new()
-            .with_skill(
-                "test-gen",
-                Skill {
-                    name: "test-gen".to_string(),
-                    enabled: true,
-                    parameters: None,
-                },
-            );
+        let override_config = ClaudeConfig::new().with_skill(
+            "test-gen",
+            Skill {
+                name: "test-gen".to_string(),
+                enabled: true,
+                parameters: None,
+            },
+        );
 
         let merged = merge_configs(&base, &override_config);
 
@@ -206,8 +201,7 @@ mod tests {
             .with_custom_instruction("Base instruction 1")
             .with_custom_instruction("Base instruction 2");
 
-        let override_config = ClaudeConfig::new()
-            .with_custom_instruction("Override instruction");
+        let override_config = ClaudeConfig::new().with_custom_instruction("Override instruction");
 
         let merged = merge_configs(&base, &override_config);
 

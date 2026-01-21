@@ -15,7 +15,7 @@ use std::collections::HashMap;
 ///
 /// This represents the complete structure of a Claude Code configuration file.
 /// All fields are optional to support empty configurations and forward compatibility.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct ClaudeConfig {
     /// MCP (Model Context Protocol) server configurations
     ///
@@ -46,18 +46,6 @@ pub struct ClaudeConfig {
     /// Any fields not recognized by the current version are preserved here.
     #[serde(flatten)]
     pub unknown: HashMap<String, serde_json::Value>,
-}
-
-impl Default for ClaudeConfig {
-    fn default() -> Self {
-        Self {
-            mcp_servers: None,
-            allowed_paths: None,
-            skills: None,
-            custom_instructions: None,
-            unknown: HashMap::new(),
-        }
-    }
 }
 
 impl ClaudeConfig {
@@ -219,7 +207,13 @@ mod tests {
         assert!(config.mcp_servers.is_some());
         assert_eq!(config.mcp_servers.as_ref().unwrap().len(), 1);
         assert_eq!(
-            config.mcp_servers.as_ref().unwrap().get("test").unwrap().name,
+            config
+                .mcp_servers
+                .as_ref()
+                .unwrap()
+                .get("test")
+                .unwrap()
+                .name,
             "test"
         );
 

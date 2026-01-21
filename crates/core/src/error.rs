@@ -164,7 +164,7 @@ impl ConfigError {
 // Implement From conversions for common error types
 impl From<serde_json::Error> for ConfigError {
     fn from(err: serde_json::Error) -> Self {
-        ConfigError::Generic(format!("JSON error: {}", err))
+        ConfigError::Generic(format!("JSON error: {err}"))
     }
 }
 
@@ -192,7 +192,7 @@ mod tests {
     #[test]
     fn test_invalid_json_error() {
         let error = ConfigError::invalid_json("/test/config.json", 10, 5, "Unexpected token");
-        let message = format!("{}", error);
+        let message = format!("{error}");
         assert!(message.contains("line 10"));
         assert!(message.contains("Unexpected token"));
     }
@@ -204,7 +204,7 @@ mod tests {
             "Server 'test' already exists",
             "Use a different server name or remove the existing server first",
         );
-        let message = format!("{}", error);
+        let message = format!("{error}");
         assert!(message.contains("McpServersRule"));
         assert!(message.contains("Use a different server name"));
     }
@@ -213,7 +213,7 @@ mod tests {
     fn test_backup_failed_error() {
         let io_error = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "Access denied");
         let error = ConfigError::backup_failed("/test/config.json", io_error);
-        let message = format!("{}", error);
+        let message = format!("{error}");
         assert!(message.contains("Operation aborted"));
         assert!(message.contains("protect your data"));
     }

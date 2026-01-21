@@ -35,10 +35,7 @@ fn test_global_and_project_config_merge() {
     );
 
     // Should inherit global instruction (project didn't override)
-    assert_eq!(
-        merged.custom_instructions.as_ref().unwrap().len(),
-        1
-    );
+    assert_eq!(merged.custom_instructions.as_ref().unwrap().len(), 1);
     assert_eq!(
         merged.custom_instructions.as_ref().unwrap()[0],
         "Follow best practices"
@@ -67,8 +64,7 @@ fn test_three_level_merge_global_project_session() {
         );
 
     // Session: temporary override
-    let session = ClaudeConfig::new()
-        .with_custom_instruction("Focus on performance");
+    let session = ClaudeConfig::new().with_custom_instruction("Focus on performance");
 
     // Merge: global + project
     let merged = merge_configs(&global, &project);
@@ -76,25 +72,20 @@ fn test_three_level_merge_global_project_session() {
     let final_merged = merge_configs(&merged, &session);
 
     // Should have both MCP servers
-    assert_eq!(
-        final_merged.mcp_servers.as_ref().unwrap().len(),
-        2
-    );
+    assert_eq!(final_merged.mcp_servers.as_ref().unwrap().len(), 2);
 
     // Should have project path
-    assert_eq!(
-        final_merged.allowed_paths.as_ref().unwrap().len(),
-        1
-    );
+    assert_eq!(final_merged.allowed_paths.as_ref().unwrap().len(), 1);
 
     // Should have project skill
-    assert!(final_merged.skills.as_ref().unwrap().contains_key("code-review"));
+    assert!(final_merged
+        .skills
+        .as_ref()
+        .unwrap()
+        .contains_key("code-review"));
 
     // Should have session instruction (overrides both global and project)
-    assert_eq!(
-        final_merged.custom_instructions.as_ref().unwrap().len(),
-        1
-    );
+    assert_eq!(final_merged.custom_instructions.as_ref().unwrap().len(), 1);
     assert_eq!(
         final_merged.custom_instructions.as_ref().unwrap()[0],
         "Focus on performance"
@@ -115,10 +106,7 @@ fn test_empty_project_inherits_global() {
     // Should inherit all global settings
     assert_eq!(merged.mcp_servers.as_ref().unwrap().len(), 1);
     assert_eq!(merged.allowed_paths.as_ref().unwrap().len(), 1);
-    assert_eq!(
-        merged.custom_instructions.as_ref().unwrap().len(),
-        1
-    );
+    assert_eq!(merged.custom_instructions.as_ref().unwrap().len(), 1);
 }
 
 #[test]
@@ -141,14 +129,8 @@ fn test_project_completely_overrides_global() {
     // Should have project values (replace)
     assert_eq!(merged.allowed_paths.as_ref().unwrap().len(), 1);
     assert_eq!(merged.allowed_paths.as_ref().unwrap()[0], "~/specific");
-    assert_eq!(
-        merged.custom_instructions.as_ref().unwrap().len(),
-        1
-    );
-    assert_eq!(
-        merged.custom_instructions.as_ref().unwrap()[0],
-        "Be strict"
-    );
+    assert_eq!(merged.custom_instructions.as_ref().unwrap().len(), 1);
+    assert_eq!(merged.custom_instructions.as_ref().unwrap()[0], "Be strict");
 }
 
 #[test]
@@ -174,8 +156,10 @@ fn test_merge_with_file_io() {
     fs::write(&project_path, project_json).unwrap();
 
     // Read both configs
-    let global_read: ClaudeConfig = serde_json::from_str(&fs::read_to_string(&global_path).unwrap()).unwrap();
-    let project_read: ClaudeConfig = serde_json::from_str(&fs::read_to_string(&project_path).unwrap()).unwrap();
+    let global_read: ClaudeConfig =
+        serde_json::from_str(&fs::read_to_string(&global_path).unwrap()).unwrap();
+    let project_read: ClaudeConfig =
+        serde_json::from_str(&fs::read_to_string(&project_path).unwrap()).unwrap();
 
     // Merge
     let merged = merge_configs(&global_read, &project_read);
@@ -187,15 +171,15 @@ fn test_merge_with_file_io() {
 
 #[test]
 fn test_merge_preserves_unknown_fields_from_both() {
-    let mut global = ClaudeConfig::new()
-        .with_mcp_server("npx", McpServer::new("npx", "npx", vec![]));
+    let mut global =
+        ClaudeConfig::new().with_mcp_server("npx", McpServer::new("npx", "npx", vec![]));
     global.unknown.insert(
         "globalFeature".to_string(),
         serde_json::json!({"setting": "global"}),
     );
 
-    let mut project = ClaudeConfig::new()
-        .with_mcp_server("uvx", McpServer::new("uvx", "uvx", vec![]));
+    let mut project =
+        ClaudeConfig::new().with_mcp_server("uvx", McpServer::new("uvx", "uvx", vec![]));
     project.unknown.insert(
         "projectFeature".to_string(),
         serde_json::json!({"setting": "project"}),
@@ -258,10 +242,7 @@ fn test_complex_real_world_scenario() {
     );
 
     // Instructions: only project instruction (replace)
-    assert_eq!(
-        merged.custom_instructions.as_ref().unwrap().len(),
-        1
-    );
+    assert_eq!(merged.custom_instructions.as_ref().unwrap().len(), 1);
     assert_eq!(
         merged.custom_instructions.as_ref().unwrap()[0],
         "Use async/await where appropriate"
@@ -271,7 +252,12 @@ fn test_complex_real_world_scenario() {
     assert_eq!(merged.skills.as_ref().unwrap().len(), 1);
     let code_review = merged.skills.as_ref().unwrap().get("code-review").unwrap();
     assert_eq!(
-        code_review.parameters.as_ref().unwrap().get("strictness").unwrap(),
+        code_review
+            .parameters
+            .as_ref()
+            .unwrap()
+            .get("strictness")
+            .unwrap(),
         "high"
     );
 }

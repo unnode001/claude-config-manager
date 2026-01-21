@@ -3,7 +3,10 @@
 //! This module provides functionality to create, list, and manage backups
 //! of configuration files to ensure data safety.
 
-use crate::{error::{ConfigError, Result}, types::BackupInfo};
+use crate::{
+    error::{ConfigError, Result},
+    types::BackupInfo,
+};
 use chrono::{DateTime, Utc};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -57,16 +60,12 @@ impl BackupManager {
         // Create backup directory if it doesn't exist
         if !self.backup_dir.exists() {
             fs::create_dir_all(&self.backup_dir).map_err(|e| {
-                ConfigError::filesystem(
-                    "create backup directory",
-                    &self.backup_dir,
-                    e,
-                )
+                ConfigError::filesystem("create backup directory", &self.backup_dir, e)
             })?;
         }
 
-        // Generate backup filename with timestamp
-        let timestamp = Utc::now().format("%Y%m%d_%H%M%S%.3f");
+        // Generate backup filename with timestamp (microsecond precision to avoid collisions)
+        let timestamp = Utc::now().format("%Y%m%d_%H%M%S%.6f");
         let file_stem = file_path
             .file_stem()
             .and_then(|s| s.to_str())
@@ -76,13 +75,21 @@ impl BackupManager {
             .and_then(|s| s.to_str())
             .unwrap_or("json");
 
-        let backup_name = format!("{}_{}.{}", file_stem, timestamp, extension);
-        let backup_path = self.backup_dir.join(&backup_name);
+        // Add sequential number if backup already exists with same timestamp
+        let mut backup_name = format!("{file_stem}_{timestamp}.{extension}");
+        let mut counter = 0;
+        let backup_path = loop {
+            let path = self.backup_dir.join(&backup_name);
+            if !path.exists() {
+                break path;
+            }
+            counter += 1;
+            backup_name = format!("{file_stem}_{timestamp}_{counter}.{extension}");
+        };
 
         // Copy file to backup location
-        fs::copy(file_path, &backup_path).map_err(|e| {
-            ConfigError::filesystem("copy file to backup", file_path, e)
-        })?;
+        fs::copy(file_path, &backup_path)
+            .map_err(|e| ConfigError::filesystem("copy file to backup", file_path, e))?;
 
         tracing::debug!(
             "Created backup: {} -> {}",
@@ -112,18 +119,17 @@ impl BackupManager {
 
         let mut backups = Vec::new();
 
-        for entry in fs::read_dir(&self.backup_dir).map_err(|e| {
-            ConfigError::filesystem("read backup directory", &self.backup_dir, e)
-        })? {
-            let entry = entry.map_err(|e| {
-                ConfigError::filesystem("read backup entry", &self.backup_dir, e)
-            })?;
+        for entry in fs::read_dir(&self.backup_dir)
+            .map_err(|e| ConfigError::filesystem("read backup directory", &self.backup_dir, e))?
+        {
+            let entry = entry
+                .map_err(|e| ConfigError::filesystem("read backup entry", &self.backup_dir, e))?;
 
             let path = entry.path();
 
             // Check if filename matches pattern: <file_stem>_<timestamp>.<ext>
             if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.starts_with(&format!("{}_", file_stem)) {
+                if name.starts_with(&format!("{file_stem}_")) {
                     if let Ok(metadata) = entry.metadata() {
                         if let Ok(modified) = metadata.modified() {
                             let created_at: DateTime<Utc> = modified.into();
@@ -231,10 +237,11 @@ impl BackupManager {
                     .unwrap_or("json");
 
                 // Build the original file path (in parent directory of backups)
-                let original_file = self.backup_dir
+                let original_file = self
+                    .backup_dir
                     .parent()
                     .unwrap_or(&self.backup_dir)
-                    .join(format!("{}.{}", original_stem, extension));
+                    .join(format!("{original_stem}.{extension}"));
 
                 // Ensure parent directory exists
                 if let Some(parent) = original_file.parent() {
@@ -246,9 +253,8 @@ impl BackupManager {
                 }
 
                 // Copy backup to original location
-                fs::copy(backup_path, &original_file).map_err(|e| {
-                    ConfigError::filesystem("restore backup", &original_file, e)
-                })?;
+                fs::copy(backup_path, &original_file)
+                    .map_err(|e| ConfigError::filesystem("restore backup", &original_file, e))?;
 
                 tracing::info!(
                     "Restored backup: {} -> {}",
@@ -262,7 +268,7 @@ impl BackupManager {
 
         Err(ConfigError::validation_failed(
             "BackupRestore",
-            format!("Could not determine original file path from backup name: {}", file_name),
+            format!("Could not determine original file path from backup name: {file_name}"),
             "Ensure the backup file follows the naming pattern: <filename>_<timestamp>.<ext>",
         ))
     }
@@ -447,7 +453,10 @@ mod tests {
         assert_eq!(backups.len(), 1);
 
         let backup = &backups[0];
-        assert_eq!(backup.original_path, test_file.to_string_lossy().to_string());
+        assert_eq!(
+            backup.original_path,
+            test_file.to_string_lossy().to_string()
+        );
         assert!(backup.size > 0);
         assert!(backup.path.contains("config_"));
     }

@@ -2,10 +2,12 @@
 //!
 //! Tests the CLI commands end-to-end using assert_cmd.
 
-use assert_cmd::Command;
+use assert_cmd::assert::OutputAssertExt;
+use assert_cmd::cargo::CommandCargoExt;
 use predicates::prelude::*;
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 use tempfile::TempDir;
 
 /// Helper struct to set up and tear down test environment
@@ -61,7 +63,9 @@ mod cli_tests {
             .arg("--help")
             .assert()
             .success()
-            .stdout(predicate::str::contains("A centralized configuration management tool"));
+            .stdout(predicate::str::contains(
+                "A centralized configuration management tool",
+            ));
     }
 
     #[test]
@@ -185,7 +189,12 @@ mod cli_tests {
 
         Command::cargo_bin("ccm")
             .unwrap()
-            .args(["project", "scan", "--path", temp_dir.path().to_str().unwrap()])
+            .args([
+                "project",
+                "scan",
+                "--path",
+                temp_dir.path().to_str().unwrap(),
+            ])
             .assert()
             .success()
             .stdout(predicate::str::contains("No projects found"));
@@ -203,7 +212,12 @@ mod cli_tests {
 
         Command::cargo_bin("ccm")
             .unwrap()
-            .args(["project", "scan", "--path", temp_dir.path().to_str().unwrap()])
+            .args([
+                "project",
+                "scan",
+                "--path",
+                temp_dir.path().to_str().unwrap(),
+            ])
             .assert()
             .success()
             .stdout(predicate::str::contains("Found 1 project"))
@@ -222,7 +236,13 @@ mod cli_tests {
 
         Command::cargo_bin("ccm")
             .unwrap()
-            .args(["project", "scan", "--path", temp_dir.path().to_str().unwrap(), "--verbose"])
+            .args([
+                "project",
+                "scan",
+                "--path",
+                temp_dir.path().to_str().unwrap(),
+                "--verbose",
+            ])
             .assert()
             .success()
             .stdout(predicate::str::contains("Root:"))
@@ -237,7 +257,12 @@ mod cli_tests {
 
         Command::cargo_bin("ccm")
             .unwrap()
-            .args(["project", "list", "--path", temp_dir.path().to_str().unwrap()])
+            .args([
+                "project",
+                "list",
+                "--path",
+                temp_dir.path().to_str().unwrap(),
+            ])
             .assert()
             .success()
             .stdout(predicate::str::contains("No projects found"));
@@ -259,13 +284,83 @@ mod cli_tests {
         Command::cargo_bin("ccm")
             .unwrap()
             .args([
-                "project", "scan",
-                "--path", temp_dir.path().to_str().unwrap(),
-                "--depth", "1"
+                "project",
+                "scan",
+                "--path",
+                temp_dir.path().to_str().unwrap(),
+                "--depth",
+                "1",
             ])
             .assert()
             .success()
             .stdout(predicate::str::contains("No projects found"));
+    }
+
+    #[test]
+    fn test_history_list_help() {
+        Command::cargo_bin("ccm")
+            .unwrap()
+            .args(["history", "list", "--help"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("List available"));
+    }
+
+    #[test]
+    fn test_history_restore_help() {
+        Command::cargo_bin("ccm")
+            .unwrap()
+            .args(["history", "restore", "--help"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("Restore a backup"));
+    }
+
+    #[test]
+    fn test_history_list_empty() {
+        let temp_dir = TempDir::new().unwrap();
+
+        Command::cargo_bin("ccm")
+            .unwrap()
+            .args([
+                "history",
+                "list",
+                "--project",
+                temp_dir.path().to_str().unwrap(),
+            ])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("No backups found"));
+    }
+
+    #[test]
+    fn test_search_help() {
+        Command::cargo_bin("ccm")
+            .unwrap()
+            .args(["search", "--help"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("Search configuration"));
+    }
+
+    #[test]
+    fn test_config_export_help() {
+        Command::cargo_bin("ccm")
+            .unwrap()
+            .args(["config", "export", "--help"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("Export configuration"));
+    }
+
+    #[test]
+    fn test_config_import_help() {
+        Command::cargo_bin("ccm")
+            .unwrap()
+            .args(["config", "import", "--help"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("Import configuration"));
     }
 
     // Additional integration tests will be added as CLI features evolve

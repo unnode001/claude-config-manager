@@ -2,7 +2,7 @@
 //!
 //! These tests verify backup behavior in realistic scenarios.
 
-use claude_config_manager_core::{BackupManager, ConfigError};
+use claude_config_manager_core::BackupManager;
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::PathBuf;
@@ -77,8 +77,14 @@ fn test_multiple_backups_different_files() {
     let config1 = temp_dir.path().join("config1.json");
     let config2 = temp_dir.path().join("config2.json");
 
-    File::create(&config1).unwrap().write_all(b"{\"id\": 1}").unwrap();
-    File::create(&config2).unwrap().write_all(b"{\"id\": 2}").unwrap();
+    File::create(&config1)
+        .unwrap()
+        .write_all(b"{\"id\": 1}")
+        .unwrap();
+    File::create(&config2)
+        .unwrap()
+        .write_all(b"{\"id\": 2}")
+        .unwrap();
 
     // Create backups for both files
     manager.create_backup(&config1).unwrap();
@@ -101,7 +107,10 @@ fn test_backup_directory_created_automatically() {
     let backup_dir = temp_dir.path().join("nonexistent").join("backups");
     let config_file = temp_dir.path().join("config.json");
 
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     let manager = BackupManager::new(&backup_dir, None);
 
@@ -117,7 +126,10 @@ fn test_backup_with_unicode_filename() {
     let backup_dir = temp_dir.path().join("backups");
     let config_file = temp_dir.path().join("配置文件.json");
 
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     let manager = BackupManager::new(&backup_dir, None);
 
@@ -139,7 +151,8 @@ fn test_large_file_backup() {
     let large_content = "{\"data\": \"".to_string() + &"x".repeat(1_000_000) + "\"}";
     File::create(&config_file)
         .unwrap()
-        .write_all(large_content.as_bytes()).unwrap();
+        .write_all(large_content.as_bytes())
+        .unwrap();
 
     let manager = BackupManager::new(&backup_dir, None);
 
@@ -158,7 +171,10 @@ fn test_cleanup_removes_correct_backups() {
     let backup_dir = temp_dir.path().join("backups");
     let config_file = temp_dir.path().join("config.json");
 
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     let manager = BackupManager::new(&backup_dir, Some(3));
 
@@ -189,7 +205,10 @@ fn test_cleanup_removes_correct_backups() {
 
     // Verify that exactly 2 backups were removed from filesystem
     let remaining_count = backup_paths.iter().filter(|p| p.exists()).count();
-    assert_eq!(remaining_count, 3, "Should have exactly 3 remaining backups");
+    assert_eq!(
+        remaining_count, 3,
+        "Should have exactly 3 remaining backups"
+    );
 }
 
 #[test]
@@ -199,7 +218,10 @@ fn test_error_handling_on_permission_denied() {
     let backup_dir = temp_dir.path().join("backups");
     let config_file = temp_dir.path().join("config.json");
 
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     let manager = BackupManager::new(&backup_dir, None);
 
@@ -235,7 +257,10 @@ fn test_concurrent_backup_safety() {
     let backup_dir = temp_dir.path().join("backups");
     let config_file = temp_dir.path().join("config.json");
 
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     let manager = BackupManager::new(&backup_dir, None);
 
@@ -260,7 +285,10 @@ fn test_restore_workflow_full_cycle() {
 
     // Create initial config
     let original_content = b"{\"version\": 1, \"data\": \"original\"}";
-    File::create(&config_file).unwrap().write_all(original_content).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(original_content)
+        .unwrap();
 
     let manager = BackupManager::new(&backup_dir, None);
 
@@ -270,7 +298,10 @@ fn test_restore_workflow_full_cycle() {
 
     // Modify the original file
     let modified_content = b"{\"version\": 2, \"data\": \"modified\"}";
-    File::create(&config_file).unwrap().write_all(modified_content).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(modified_content)
+        .unwrap();
 
     // Verify file was modified
     let current = fs::read_to_string(&config_file).unwrap();
@@ -303,7 +334,7 @@ fn test_restore_selective_backup() {
     // Create second version and backup
     let v2 = b"{\"version\": 2}";
     File::create(&config_file).unwrap().write_all(v2).unwrap();
-    let backup2 = manager.create_backup(&config_file).unwrap();
+    let _backup2 = manager.create_backup(&config_file).unwrap();
     std::thread::sleep(std::time::Duration::from_millis(100));
 
     // Create third version and backup
@@ -330,7 +361,10 @@ fn test_restore_creates_missing_parent_directory() {
     let config_file = temp_dir.path().join("config.json");
 
     // Create config file and backup
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     let manager = BackupManager::new(&backup_dir, None);
     let backup_path = manager.create_backup(&config_file).unwrap();
@@ -371,14 +405,20 @@ fn test_backup_list_order() {
     let backup_dir = temp_dir.path().join("backups");
     let config_file = temp_dir.path().join("config.json");
 
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     let manager = BackupManager::new(&backup_dir, None);
 
     // Create multiple backups
     let mut backup_paths = Vec::new();
     for i in 0..3 {
-        File::create(&config_file).unwrap().write_all(format!("{{\"v\":{}}}", i).as_bytes()).unwrap();
+        File::create(&config_file)
+            .unwrap()
+            .write_all(format!("{{\"v\":{i}}}").as_bytes())
+            .unwrap();
         let path = manager.create_backup(&config_file).unwrap();
         backup_paths.push(path);
         std::thread::sleep(std::time::Duration::from_millis(100));
@@ -401,13 +441,19 @@ fn test_backup_restore_with_cleanup() {
     let backup_dir = temp_dir.path().join("backups");
     let config_file = temp_dir.path().join("config.json");
 
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     let manager = BackupManager::new(&backup_dir, Some(2)); // Keep only 2
 
     // Create 5 backups
     for i in 0..5 {
-        File::create(&config_file).unwrap().write_all(format!("{{\"v\":{}}}", i).as_bytes()).unwrap();
+        File::create(&config_file)
+            .unwrap()
+            .write_all(format!("{{\"v\":{i}}}").as_bytes())
+            .unwrap();
         manager.create_backup(&config_file).unwrap();
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
@@ -423,5 +469,8 @@ fn test_backup_restore_with_cleanup() {
     // Restore from most recent backup should still work
     let most_recent_backup = PathBuf::from(&backups[0].path);
     let result = manager.restore_backup(&most_recent_backup);
-    assert!(result.is_ok(), "Restore from recent backup should work after cleanup");
+    assert!(
+        result.is_ok(),
+        "Restore from recent backup should work after cleanup"
+    );
 }

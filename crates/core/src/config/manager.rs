@@ -5,10 +5,10 @@
 
 use crate::{
     backup::BackupManager,
-    error::{ConfigError, Result},
     config::validation::validate_config,
-    paths::{get_global_config_path, find_project_config},
-    types::{ConfigScope, ConfigDiff, SourceMap},
+    error::{ConfigError, Result},
+    paths::{find_project_config, get_global_config_path},
+    types::{ConfigDiff, ConfigScope, SourceMap},
     ConfigSearcher, SearchOptions, SearchResult,
 };
 use serde_json::Value;
@@ -60,24 +60,17 @@ impl ConfigManager {
         }
 
         // Read file content
-        let content = fs::read_to_string(path).map_err(|e| {
-            ConfigError::filesystem("read config file", path, e)
-        })?;
+        let content = fs::read_to_string(path)
+            .map_err(|e| ConfigError::filesystem("read config file", path, e))?;
 
         // Parse JSON
-        let config: crate::ClaudeConfig = serde_json::from_str(&content)
-            .map_err(|e| {
-                // Try to extract line and column from error message
-                let error_str = e.to_string();
-                let (line, column) = parse_json_error_location(&error_str);
+        let config: crate::ClaudeConfig = serde_json::from_str(&content).map_err(|e| {
+            // Try to extract line and column from error message
+            let error_str = e.to_string();
+            let (line, column) = parse_json_error_location(&error_str);
 
-                ConfigError::invalid_json(
-                    path,
-                    line,
-                    column,
-                    error_str,
-                )
-            })?;
+            ConfigError::invalid_json(path, line, column, error_str)
+        })?;
 
         tracing::debug!("Loaded configuration from: {}", path.display());
 
@@ -116,9 +109,8 @@ impl ConfigManager {
         validate_config(config)?;
 
         // Step 3: Serialize configuration
-        let json = serde_json::to_string_pretty(config).map_err(|e| {
-            ConfigError::Generic(format!("Failed to serialize config: {}", e))
-        })?;
+        let json = serde_json::to_string_pretty(config)
+            .map_err(|e| ConfigError::Generic(format!("Failed to serialize config: {e}")))?;
 
         // Step 4: Atomic write using temp file
         self.atomic_write(path, &json)?;
@@ -137,9 +129,8 @@ impl ConfigManager {
         // Ensure parent directory exists
         if let Some(parent) = target.parent() {
             if !parent.exists() {
-                fs::create_dir_all(parent).map_err(|e| {
-                    ConfigError::filesystem("create config directory", parent, e)
-                })?;
+                fs::create_dir_all(parent)
+                    .map_err(|e| ConfigError::filesystem("create config directory", parent, e))?;
             }
         }
 
@@ -148,28 +139,21 @@ impl ConfigManager {
 
         // Write to temp file
         {
-            let mut file = File::create(&temp_path).map_err(|e| {
-                ConfigError::filesystem("create temp file", &temp_path, e)
-            })?;
+            let mut file = File::create(&temp_path)
+                .map_err(|e| ConfigError::filesystem("create temp file", &temp_path, e))?;
 
-            file.write_all(content.as_bytes()).map_err(|e| {
-                ConfigError::filesystem("write to temp file", &temp_path, e)
-            })?;
+            file.write_all(content.as_bytes())
+                .map_err(|e| ConfigError::filesystem("write to temp file", &temp_path, e))?;
 
-            file.flush().map_err(|e| {
-                ConfigError::filesystem("flush temp file", &temp_path, e)
-            })?;
+            file.flush()
+                .map_err(|e| ConfigError::filesystem("flush temp file", &temp_path, e))?;
         }
 
         // Atomic rename (temp -> target)
         fs::rename(&temp_path, target).map_err(|e| {
             // Clean up temp file on failure
             let _ = fs::remove_file(&temp_path);
-            ConfigError::filesystem(
-                "atomic rename (temp to config)",
-                target,
-                e,
-            )
+            ConfigError::filesystem("atomic rename (temp to config)", target, e)
         })?;
 
         Ok(())
@@ -216,7 +200,10 @@ impl ConfigManager {
     /// Returns an error if:
     /// - File exists but cannot be read
     /// - JSON is invalid
-    pub fn get_project_config(&self, project_path: Option<&Path>) -> Result<Option<crate::ClaudeConfig>> {
+    pub fn get_project_config(
+        &self,
+        project_path: Option<&Path>,
+    ) -> Result<Option<crate::ClaudeConfig>> {
         let config_path = if let Some(path) = project_path {
             path.join(".claude").join("config.json")
         } else {
@@ -287,7 +274,11 @@ impl ConfigManager {
     ///
     /// # Errors
     /// Returns an error if write fails
-    pub fn update_project_config(&self, project_path: &Path, config: &crate::ClaudeConfig) -> Result<()> {
+    pub fn update_project_config(
+        &self,
+        project_path: &Path,
+        config: &crate::ClaudeConfig,
+    ) -> Result<()> {
         let config_path = project_path.join(".claude").join("config.json");
         self.write_config_with_backup(&config_path, config)
     }
@@ -302,7 +293,10 @@ impl ConfigManager {
     ///
     /// # Errors
     /// Returns an error if configs cannot be read
-    pub fn diff_configs(&self, project_path: Option<&Path>) -> Result<(Vec<ConfigDiff>, SourceMap)> {
+    pub fn diff_configs(
+        &self,
+        project_path: Option<&Path>,
+    ) -> Result<(Vec<ConfigDiff>, SourceMap)> {
         let global_config = self.get_global_config()?;
         let project_config = self.get_project_config(project_path)?;
 
@@ -313,10 +307,24 @@ impl ConfigManager {
         let mut source_map = SourceMap::new();
 
         // Compare all keys
-        self.compare_values(&global_json, &project_json, "", &mut diffs, &mut source_map, ConfigScope::Global);
+        self.compare_values(
+            &global_json,
+            &project_json,
+            "",
+            &mut diffs,
+            &mut source_map,
+            ConfigScope::Global,
+        );
 
         // Find additions (keys only in project)
-        self.find_additions(&global_json, &project_json, "", &mut diffs, &mut source_map, ConfigScope::Project);
+        self.find_additions(
+            &global_json,
+            &project_json,
+            "",
+            &mut diffs,
+            &mut source_map,
+            ConfigScope::Project,
+        );
 
         Ok((diffs, source_map))
     }
@@ -338,7 +346,7 @@ impl ConfigManager {
                     let new_key_path = if key_path.is_empty() {
                         key.clone()
                     } else {
-                        format!("{}.{}", key_path, key)
+                        format!("{key_path}.{key}")
                     };
 
                     if let Some(project_value) = project_map.get(key) {
@@ -410,7 +418,7 @@ impl ConfigManager {
                 let new_key_path = if key_path.is_empty() {
                     key.clone()
                 } else {
-                    format!("{}.{}", key_path, key)
+                    format!("{key_path}.{key}")
                 };
 
                 if !global_map.contains_key(key) {
@@ -424,8 +432,7 @@ impl ConfigManager {
                     // Recurse into nested objects for additions
                     if let Value::Object(nested_project) = project_value {
                         let empty_object = Value::Object(Default::default());
-                        let global_nested_ref = global_map.get(key)
-                            .unwrap_or(&empty_object);
+                        let global_nested_ref = global_map.get(key).unwrap_or(&empty_object);
 
                         if let Value::Object(nested_global) = global_nested_ref {
                             let global_value = Value::Object(nested_global.clone());
@@ -463,11 +470,7 @@ impl ConfigManager {
     ///     println!("{}: {}", result.key_path, result.value);
     /// }
     /// ```
-    pub fn search_config(
-        &self,
-        query: &str,
-        scope: ConfigScope,
-    ) -> Result<Vec<SearchResult>> {
+    pub fn search_config(&self, query: &str, scope: ConfigScope) -> Result<Vec<SearchResult>> {
         self.search_config_with_options(query, scope, SearchOptions::new())
     }
 
@@ -495,12 +498,8 @@ impl ConfigManager {
                 if global_path.exists() {
                     if let Ok(config) = self.read_config(&global_path) {
                         let searcher = ConfigSearcher::with_options(options.clone());
-                        let results = searcher.search(
-                            query,
-                            &config,
-                            ConfigScope::Global,
-                            global_path,
-                        )?;
+                        let results =
+                            searcher.search(query, &config, ConfigScope::Global, global_path)?;
                         all_results.extend(results);
                     }
                 }
@@ -510,12 +509,8 @@ impl ConfigManager {
                 if let Some(project_path) = find_project_config(None) {
                     if let Ok(config) = self.read_config(&project_path) {
                         let searcher = ConfigSearcher::with_options(options.clone());
-                        let results = searcher.search(
-                            query,
-                            &config,
-                            ConfigScope::Project,
-                            project_path,
-                        )?;
+                        let results =
+                            searcher.search(query, &config, ConfigScope::Project, project_path)?;
                         all_results.extend(results);
                     }
                 }
@@ -536,11 +531,7 @@ impl ConfigManager {
     ///
     /// # Errors
     /// Returns an error if export fails
-    pub fn export_config(
-        &self,
-        config: &crate::ClaudeConfig,
-        path: &Path,
-    ) -> Result<PathBuf> {
+    pub fn export_config(&self, config: &crate::ClaudeConfig, path: &Path) -> Result<PathBuf> {
         crate::ConfigImporter::export(config, path)
     }
 
@@ -604,7 +595,9 @@ fn parse_json_error_location(error_msg: &str) -> (usize, usize) {
             if let Ok(line) = error_msg[line_pos + 5..line_pos + colon_pos].parse::<usize>() {
                 if let Some(col_pos) = error_msg.find("column ") {
                     if let Some(end) = error_msg[col_pos + 7..].find(',') {
-                        if let Ok(column) = error_msg[col_pos + 7..col_pos + 7 + end].parse::<usize>() {
+                        if let Ok(column) =
+                            error_msg[col_pos + 7..col_pos + 7 + end].parse::<usize>()
+                        {
                             return (line, column);
                         }
                     }
@@ -695,7 +688,9 @@ mod tests {
 
         // Write new config
         let config = crate::ClaudeConfig::new();
-        manager.write_config_with_backup(&config_path, &config).unwrap();
+        manager
+            .write_config_with_backup(&config_path, &config)
+            .unwrap();
 
         // Verify backup was created
         let backups = manager.backup_manager().list_backups(&config_path).unwrap();
@@ -714,10 +709,7 @@ mod tests {
         // Create invalid config (empty server name)
         let mut config = crate::ClaudeConfig::new();
         let mut servers = std::collections::HashMap::new();
-        servers.insert(
-            "".to_string(),
-            crate::McpServer::new("", "npx", vec![]),
-        );
+        servers.insert("".to_string(), crate::McpServer::new("", "npx", vec![]));
         config.mcp_servers = Some(servers);
 
         let result = manager.write_config_with_backup(&config_path, &config);
@@ -731,7 +723,11 @@ mod tests {
     #[test]
     fn test_write_creates_parent_directory() {
         let temp_dir = TempDir::new().unwrap();
-        let nested_path = temp_dir.path().join("nested").join("dir").join("config.json");
+        let nested_path = temp_dir
+            .path()
+            .join("nested")
+            .join("dir")
+            .join("config.json");
         let backup_dir = temp_dir.path().join("backups");
 
         let manager = ConfigManager::new(&backup_dir);
@@ -762,10 +758,7 @@ mod tests {
         // Try to write invalid config (should fail)
         let mut invalid_config = crate::ClaudeConfig::new();
         let mut servers = std::collections::HashMap::new();
-        servers.insert(
-            "".to_string(),
-            crate::McpServer::new("", "npx", vec![]),
-        );
+        servers.insert("".to_string(), crate::McpServer::new("", "npx", vec![]));
         invalid_config.mcp_servers = Some(servers);
 
         let result = manager.write_config_with_backup(&config_path, &invalid_config);
@@ -926,8 +919,7 @@ mod tests {
         let claude_dir = project_dir.join(".claude");
         fs::create_dir_all(&claude_dir).unwrap();
 
-        let project_config = crate::ClaudeConfig::new()
-            .with_allowed_path("~/my-project");
+        let project_config = crate::ClaudeConfig::new().with_allowed_path("~/my-project");
 
         let backup_dir = temp_dir.path().join("backups");
         let manager = ConfigManager::new(&backup_dir);
@@ -936,8 +928,12 @@ mod tests {
         let global_path = temp_dir.path().join("global.json");
         let project_path = claude_dir.join("config.json");
 
-        manager.write_config_with_backup(&global_path, &global_config).unwrap();
-        manager.write_config_with_backup(&project_path, &project_config).unwrap();
+        manager
+            .write_config_with_backup(&global_path, &global_config)
+            .unwrap();
+        manager
+            .write_config_with_backup(&project_path, &project_config)
+            .unwrap();
 
         // Manually read and merge for testing
         let global = manager.read_config(&global_path).unwrap();
@@ -957,12 +953,14 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let backup_dir = temp_dir.path().join("backups");
 
-        let global_config = crate::ClaudeConfig::new()
-            .with_custom_instruction("Global instruction");
+        let global_config =
+            crate::ClaudeConfig::new().with_custom_instruction("Global instruction");
 
         let global_path = temp_dir.path().join("global.json");
         let manager = ConfigManager::new(&backup_dir);
-        manager.write_config_with_backup(&global_path, &global_config).unwrap();
+        manager
+            .write_config_with_backup(&global_path, &global_config)
+            .unwrap();
 
         // Read global back
         let result = manager.read_config(&global_path);
@@ -991,8 +989,12 @@ mod tests {
         let project_path = temp_dir.path().join("project.json");
 
         let manager = ConfigManager::new(&backup_dir);
-        manager.write_config_with_backup(&global_path, &global_config).unwrap();
-        manager.write_config_with_backup(&project_path, &project_config).unwrap();
+        manager
+            .write_config_with_backup(&global_path, &global_config)
+            .unwrap();
+        manager
+            .write_config_with_backup(&project_path, &project_config)
+            .unwrap();
 
         // Merge
         let global = manager.read_config(&global_path).unwrap();

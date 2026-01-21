@@ -17,8 +17,7 @@ pub fn format_json(config: &ClaudeConfig, key: Option<&str>) -> Result<()> {
 
     // Filter by key if specified
     let output = if let Some(key_path) = key {
-        get_nested_value(&json_value, key_path)
-            .unwrap_or_else(|| Value::Null)
+        get_nested_value(&json_value, key_path).unwrap_or(Value::Null)
     } else {
         json_value
     };
@@ -61,8 +60,7 @@ mod tests {
 
     #[test]
     fn test_format_json_full_config() {
-        let config = ClaudeConfig::new()
-            .with_custom_instruction("Be concise");
+        let config = ClaudeConfig::new().with_custom_instruction("Be concise");
 
         // Should not panic
         format_json(&config, None).unwrap();

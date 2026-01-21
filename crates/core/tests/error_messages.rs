@@ -100,11 +100,8 @@ fn test_filesystem_error_includes_operation_and_path() {
 
 #[test]
 fn test_mcp_server_error_includes_context() {
-    let error = ConfigError::mcp_server_error(
-        "test-server",
-        "start",
-        "Failed to connect to server",
-    );
+    let error =
+        ConfigError::mcp_server_error("test-server", "start", "Failed to connect to server");
     let message = error.to_string();
 
     // Should include server name and operation
@@ -144,8 +141,7 @@ fn test_all_errors_are_user_friendly() {
 
         assert!(
             has_guidance,
-            "Error message should provide guidance: {}",
-            message
+            "Error message should provide guidance: {message}"
         );
     }
 }

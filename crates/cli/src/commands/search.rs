@@ -4,10 +4,7 @@
 
 use anyhow::Result;
 use clap::Parser;
-use claude_config_manager_core::{
-    ConfigManager, SearchOptions,
-    types::ConfigScope,
-};
+use claude_config_manager_core::{types::ConfigScope, ConfigManager, SearchOptions};
 
 /// Search command arguments
 #[derive(Parser, Debug)]

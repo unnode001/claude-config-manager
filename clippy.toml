@@ -1,28 +1,5 @@
 # Clippy configuration for Claude Config Manager
-# Strict warning settings for maximum code quality
+# Simplified configuration for compatibility with newer clippy versions
 
-# Pedantic lints (more strict checks)
-pedantic = "warn"
-
-# Additional lints we want
-warnings = "warn"
-
-# Specific lints to deny (treat as errors)
-too_many_arguments = "deny"
-cast_possible_truncation = "deny"
-cast_possible_wrap = "deny"
-cast_sign_loss = "deny"
-mut_mut = "deny"
-mutex_atomic = "deny"
-string_add = "deny"
-string_add_assign = "deny"
-unpack_never = "deny"
-
-# Allow some pedantic lints that are too strict for our use case
-# (can be adjusted as needed)
-module_name_repetitions = "allow"
-must_use_candidate = "allow"
-missing_errors_doc = "allow"
-missing_panics_doc = "allow"
-struct_excessive_bools = "allow"
-struct_field_names = "allow"
+# Enable pedantic lints (more strict checks)
+# These are now enabled via command-line: cargo clippy -- -W clippy::pedantic

@@ -3,13 +3,9 @@
 //! These tests verify validation behavior in realistic scenarios
 //! with real filesystem and configuration files.
 
-use claude_config_manager_core::{
-    ConfigManager, McpServer, Skill,
-    validate_config,
-};
+use claude_config_manager_core::{validate_config, ConfigManager};
 use std::fs::{self, File};
 use std::io::Write;
-use std::path::PathBuf;
 use tempfile::TempDir;
 
 // T99: Validation scenario integration tests
@@ -21,8 +17,8 @@ fn test_valid_config_passes_all_rules() {
     let config_file = temp_dir.path().join("config.json");
 
     // Create a valid config with all fields
-    let server = McpServer::new("npx", "npx", vec!["-y".to_string()]);
-    let skill = Skill {
+    let _server = claude_config_manager_core::McpServer::new("npx", "npx", vec!["-y".to_string()]);
+    let _skill = claude_config_manager_core::Skill {
         name: "code-review".to_string(),
         enabled: true,
         parameters: Some(serde_json::json!({"strictness": "high"})),
@@ -46,7 +42,10 @@ fn test_valid_config_passes_all_rules() {
     });
 
     // Write config to file
-    File::create(&config_file).unwrap().write_all(config.to_string().as_bytes()).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(config.to_string().as_bytes())
+        .unwrap();
 
     // Read and validate
     let backup_dir = temp_dir.path().join("backups");
@@ -72,7 +71,10 @@ fn test_invalid_mcp_server_name_rejected() {
         }
     });
 
-    File::create(&config_file).unwrap().write_all(config.to_string().as_bytes()).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(config.to_string().as_bytes())
+        .unwrap();
 
     let backup_dir = temp_dir.path().join("backups");
     let manager = ConfigManager::new(&backup_dir);
@@ -95,7 +97,10 @@ fn test_invalid_allowed_path_rejected() {
         "allowedPaths": ["", "/valid/path"]
     });
 
-    File::create(&config_file).unwrap().write_all(config.to_string().as_bytes()).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(config.to_string().as_bytes())
+        .unwrap();
 
     let backup_dir = temp_dir.path().join("backups");
     let manager = ConfigManager::new(&backup_dir);
@@ -122,7 +127,10 @@ fn test_validation_with_write_config() {
 
     // Create invalid config (empty server name)
     let mut servers = std::collections::HashMap::new();
-    servers.insert("".to_string(), McpServer::new("", "npx", vec![]));
+    servers.insert(
+        "".to_string(),
+        claude_config_manager_core::McpServer::new("", "npx", vec![]),
+    );
 
     let mut config = if config_file.exists() {
         manager.read_config(&config_file).unwrap()
@@ -145,7 +153,10 @@ fn test_empty_config_is_valid() {
     let temp_dir = TempDir::new().unwrap();
     let config_file = temp_dir.path().join("config.json");
 
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     let backup_dir = temp_dir.path().join("backups");
     let manager = ConfigManager::new(&backup_dir);
@@ -170,7 +181,10 @@ fn test_partial_config_is_valid() {
         }
     });
 
-    File::create(&config_file).unwrap().write_all(config.to_string().as_bytes()).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(config.to_string().as_bytes())
+        .unwrap();
 
     let backup_dir = temp_dir.path().join("backups");
     let manager = ConfigManager::new(&backup_dir);
@@ -225,7 +239,10 @@ fn test_complex_nested_config_validates() {
         }
     });
 
-    File::create(&config_file).unwrap().write_all(config.to_string().as_bytes()).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(config.to_string().as_bytes())
+        .unwrap();
 
     let backup_dir = temp_dir.path().join("backups");
     let manager = ConfigManager::new(&backup_dir);
@@ -245,7 +262,10 @@ fn test_validation_error_messages_are_actionable() {
         "allowedPaths": [""]
     });
 
-    File::create(&config_file).unwrap().write_all(config.to_string().as_bytes()).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(config.to_string().as_bytes())
+        .unwrap();
 
     let backup_dir = temp_dir.path().join("backups");
     let manager = ConfigManager::new(&backup_dir);
@@ -283,7 +303,10 @@ fn test_multiple_validation_errors() {
         "allowedPaths": [""]
     });
 
-    File::create(&config_file).unwrap().write_all(config.to_string().as_bytes()).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(config.to_string().as_bytes())
+        .unwrap();
 
     let backup_dir = temp_dir.path().join("backups");
     let manager = ConfigManager::new(&backup_dir);
@@ -310,7 +333,10 @@ fn test_unicode_paths_validation() {
         ]
     });
 
-    File::create(&config_file).unwrap().write_all(config.to_string().as_bytes()).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(config.to_string().as_bytes())
+        .unwrap();
 
     let backup_dir = temp_dir.path().join("backups");
     let manager = ConfigManager::new(&backup_dir);
@@ -331,7 +357,10 @@ fn test_config_with_null_bytes_rejected() {
     config["allowedPaths"] = serde_json::json!(["/path\u{0000}with\u{0000}nulls"]);
 
     let config_str = config.to_string();
-    File::create(&config_file).unwrap().write_all(config_str.as_bytes()).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(config_str.as_bytes())
+        .unwrap();
 
     let backup_dir = temp_dir.path().join("backups");
     let manager = ConfigManager::new(&backup_dir);

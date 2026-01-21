@@ -20,14 +20,16 @@ fn test_atomic_write_preserves_original_on_failure() {
 
     // Create original config
     let original_content = b"{\"version\": 1, \"data\": \"original\"}";
-    File::create(&config_file).unwrap().write_all(original_content).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(original_content)
+        .unwrap();
 
     let manager = ConfigManager::new(&backup_dir);
 
     // Modify config
     let mut config = ClaudeConfig::new();
-    config.custom_instructions = Some(vec
-!["modified".to_string()]);
+    config.custom_instructions = Some(vec!["modified".to_string()]);
 
     // Get backup manager
     let backup_mgr = manager.backup_manager();
@@ -61,7 +63,10 @@ fn test_backup_created_before_write() {
 
     // Create original config
     let original_content = b"{\"version\": 1}";
-    File::create(&config_file).unwrap().write_all(original_content).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(original_content)
+        .unwrap();
 
     let manager = ConfigManager::new(&backup_dir);
 
@@ -74,14 +79,15 @@ fn test_backup_created_before_write() {
 
     // Write new config
     let mut config = ClaudeConfig::new();
-    config.custom_instructions = Some(vec
-!["new".to_string()]);
-    manager.write_config_with_backup(&config_file, &config).unwrap();
+    config.custom_instructions = Some(vec!["new".to_string()]);
+    manager
+        .write_config_with_backup(&config_file, &config)
+        .unwrap();
 
     // Verify backup exists
     let backup_manager = BackupManager::new(&backup_dir, None);
     let backups = backup_manager.list_backups(&config_file).unwrap();
-    assert!(backups.len() > 0, "Backup should be created");
+    assert!(!backups.is_empty(), "Backup should be created");
 
     // Verify backup has original content
     let backup_content = fs::read_to_string(&backups[0].path).unwrap();
@@ -118,15 +124,19 @@ fn test_concurrent_write_safety() {
     let backup_dir = temp_dir.path().join("backups");
     let config_file = temp_dir.path().join("config.json");
 
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     // Perform multiple writes in sequence (simulating rapid changes)
     for i in 0..5 {
         let manager = ConfigManager::new(&backup_dir);
         let mut config = ClaudeConfig::new();
-        config.custom_instructions = Some(vec
-![format!("version_{}", i)]);
-        manager.write_config_with_backup(&config_file, &config).unwrap();
+        config.custom_instructions = Some(vec![format!("version_{}", i)]);
+        manager
+            .write_config_with_backup(&config_file, &config)
+            .unwrap();
 
         // Verify file is valid JSON after each write
         let content = fs::read_to_string(&config_file).unwrap();
@@ -184,7 +194,10 @@ fn test_write_with_invalid_json_recovery() {
     let config_file = temp_dir.path().join("config.json");
 
     // Create file with invalid JSON
-    File::create(&config_file).unwrap().write_all(b"{invalid json}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{invalid json}")
+        .unwrap();
 
     let manager = ConfigManager::new(&backup_dir);
 
@@ -211,7 +224,10 @@ fn test_atomic_write_file_permissions() {
     let config_file = temp_dir.path().join("config.json");
 
     // Create file
-    File::create(&config_file).unwrap().write_all(b"{}").unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(b"{}")
+        .unwrap();
 
     // Get original permissions
     let _metadata_before = fs::metadata(&config_file).unwrap();
@@ -219,7 +235,9 @@ fn test_atomic_write_file_permissions() {
     // Write new config
     let manager = ConfigManager::new(&backup_dir);
     let config = ClaudeConfig::new();
-    manager.write_config_with_backup(&config_file, &config).unwrap();
+    manager
+        .write_config_with_backup(&config_file, &config)
+        .unwrap();
 
     // Verify file still exists and is readable
     let metadata_after = fs::metadata(&config_file).unwrap();
@@ -239,9 +257,10 @@ fn test_backup_and_write_cycle() {
     // Perform multiple write cycles
     for i in 0..3 {
         let mut config = ClaudeConfig::new();
-        config.custom_instructions = Some(vec
-![format!("Cycle {}", i)]);
-        manager.write_config_with_backup(&config_file, &config).unwrap();
+        config.custom_instructions = Some(vec![format!("Cycle {}", i)]);
+        manager
+            .write_config_with_backup(&config_file, &config)
+            .unwrap();
         std::thread::sleep(std::time::Duration::from_millis(150));
     }
 
@@ -249,12 +268,19 @@ fn test_backup_and_write_cycle() {
     // (May not be exactly 3 due to timestamp precision on some systems)
     let backup_manager = BackupManager::new(&backup_dir, None);
     let backups = backup_manager.list_backups(&config_file).unwrap();
-    assert!(backups.len() >= 2, "Should have at least 2 backups, got {}", backups.len());
+    assert!(
+        backups.len() >= 2,
+        "Should have at least 2 backups, got {}",
+        backups.len()
+    );
 
     // Verify all backups exist as files
     for backup in &backups {
-        assert!(PathBuf::from(&backup.path).exists(),
-                "Backup file should exist: {}", backup.path);
+        assert!(
+            PathBuf::from(&backup.path).exists(),
+            "Backup file should exist: {}",
+            backup.path
+        );
     }
 }
 
@@ -274,7 +300,10 @@ fn test_write_after_read_preserves_all_fields() {
         }
     }"#;
 
-    File::create(&config_file).unwrap().write_all(config_json.as_bytes()).unwrap();
+    File::create(&config_file)
+        .unwrap()
+        .write_all(config_json.as_bytes())
+        .unwrap();
 
     let manager = ConfigManager::new(&backup_dir);
 
@@ -286,14 +315,18 @@ fn test_write_after_read_preserves_all_fields() {
     modified_config.custom_instructions = Some(vec!["modified".to_string()]);
 
     // Write back
-    manager.write_config_with_backup(&config_file, &modified_config).unwrap();
+    manager
+        .write_config_with_backup(&config_file, &modified_config)
+        .unwrap();
 
     // Read again
     let final_config = manager.read_config(&config_file).unwrap();
 
     // Verify known field was modified
-    assert_eq!(final_config.custom_instructions, Some(vec
-!["modified".to_string()]));
+    assert_eq!(
+        final_config.custom_instructions,
+        Some(vec!["modified".to_string()])
+    );
 
     // Note: Unknown field preservation depends on ClaudeConfig implementation
     // This test documents current behavior

@@ -3,7 +3,10 @@
 //! This module provides traits and implementations for validating
 //! Claude Code configuration files according to the specification.
 
-use crate::{config::ClaudeConfig, error::{ConfigError, Result}};
+use crate::{
+    config::ClaudeConfig,
+    error::{ConfigError, Result},
+};
 
 /// Trait for configuration validation rules
 ///
@@ -40,7 +43,7 @@ impl ValidationRule for McpServersRule {
         };
 
         // Check each server
-        for (name, _server) in servers {
+        for name in servers.keys() {
             // Name should not be empty
             if name.is_empty() {
                 return Err(ConfigError::validation_failed(
@@ -86,7 +89,7 @@ impl ValidationRule for AllowedPathsRule {
             if path.is_empty() {
                 return Err(ConfigError::validation_failed(
                     "AllowedPathsRule",
-                    format!("Path at index {} is empty", idx),
+                    format!("Path at index {idx} is empty"),
                     "All allowed paths must be non-empty strings",
                 ));
             }
@@ -95,7 +98,7 @@ impl ValidationRule for AllowedPathsRule {
             if path.contains('\0') {
                 return Err(ConfigError::validation_failed(
                     "AllowedPathsRule",
-                    format!("Path '{}' contains null character", path),
+                    format!("Path '{path}' contains null character"),
                     "Paths must be valid strings without null characters",
                 ));
             }
@@ -129,7 +132,7 @@ impl ValidationRule for SkillsRule {
         };
 
         // Check each skill
-        for (name, _skill) in skills {
+        for name in skills.keys() {
             // Name should not be empty
             if name.is_empty() {
                 return Err(ConfigError::validation_failed(

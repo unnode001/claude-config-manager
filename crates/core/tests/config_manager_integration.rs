@@ -3,7 +3,7 @@
 //! Tests get_global_config(), get_project_config(), get_merged_config()
 //! with real filesystem operations.
 
-use claude_config_manager_core::{ConfigManager, ClaudeConfig, McpServer};
+use claude_config_manager_core::{ClaudeConfig, ConfigManager, McpServer};
 use std::fs;
 use tempfile::TempDir;
 
@@ -19,8 +19,7 @@ fn test_get_global_config_reads_from_standard_location() {
     let config_path = temp_dir.path().join("config.json");
 
     // Create a config file
-    let config = ClaudeConfig::new()
-        .with_custom_instruction("Global instruction");
+    let config = ClaudeConfig::new().with_custom_instruction("Global instruction");
     let json = serde_json::to_string_pretty(&config).unwrap();
     fs::write(&config_path, json).unwrap();
 
@@ -48,8 +47,7 @@ fn test_get_project_config_finds_config_in_project_directory() {
     let config_path = claude_dir.join("config.json");
 
     // Create project config
-    let config = ClaudeConfig::new()
-        .with_custom_instruction("Project instruction");
+    let config = ClaudeConfig::new().with_custom_instruction("Project instruction");
     let json = serde_json::to_string_pretty(&config).unwrap();
     fs::write(&config_path, json).unwrap();
 
@@ -95,18 +93,22 @@ fn test_get_merged_config_combines_global_and_project() {
 
     let global_path = temp_dir.path().join("global.json");
     let manager = ConfigManager::new(&backup_dir);
-    manager.write_config_with_backup(&global_path, &global_config).unwrap();
+    manager
+        .write_config_with_backup(&global_path, &global_config)
+        .unwrap();
 
     // Create project config with uvx server
     let project_dir = temp_dir.path().join("myproject");
     let claude_dir = project_dir.join(".claude");
     fs::create_dir_all(&claude_dir).unwrap();
 
-    let project_config = ClaudeConfig::new()
-        .with_mcp_server("uvx", McpServer::new("uvx", "uvx", vec![]));
+    let project_config =
+        ClaudeConfig::new().with_mcp_server("uvx", McpServer::new("uvx", "uvx", vec![]));
 
     let project_path = claude_dir.join("config.json");
-    manager.write_config_with_backup(&project_path, &project_config).unwrap();
+    manager
+        .write_config_with_backup(&project_path, &project_config)
+        .unwrap();
 
     // Merge configs
     let global = manager.read_config(&global_path).unwrap();
@@ -137,18 +139,21 @@ fn test_get_merged_config_project_overrides_global() {
 
     let global_path = temp_dir.path().join("global.json");
     let manager = ConfigManager::new(&backup_dir);
-    manager.write_config_with_backup(&global_path, &global_config).unwrap();
+    manager
+        .write_config_with_backup(&global_path, &global_config)
+        .unwrap();
 
     // Create project config that overrides allowedPaths
     let project_dir = temp_dir.path().join("myproject");
     let claude_dir = project_dir.join(".claude");
     fs::create_dir_all(&claude_dir).unwrap();
 
-    let project_config = ClaudeConfig::new()
-        .with_allowed_path("~/my-project-only");
+    let project_config = ClaudeConfig::new().with_allowed_path("~/my-project-only");
 
     let project_path = claude_dir.join("config.json");
-    manager.write_config_with_backup(&project_path, &project_config).unwrap();
+    manager
+        .write_config_with_backup(&project_path, &project_config)
+        .unwrap();
 
     // Merge configs
     let global = manager.read_config(&global_path).unwrap();
@@ -172,12 +177,13 @@ fn test_get_merged_config_with_empty_project_config() {
     let backup_dir = temp_dir.path().join("backups");
 
     // Create global config
-    let global_config = ClaudeConfig::new()
-        .with_custom_instruction("Global instruction");
+    let global_config = ClaudeConfig::new().with_custom_instruction("Global instruction");
 
     let global_path = temp_dir.path().join("global.json");
     let manager = ConfigManager::new(&backup_dir);
-    manager.write_config_with_backup(&global_path, &global_config).unwrap();
+    manager
+        .write_config_with_backup(&global_path, &global_config)
+        .unwrap();
 
     // No project config
     let global = manager.read_config(&global_path).unwrap();
@@ -195,15 +201,15 @@ fn test_config_manager_integration_full_workflow() {
     let backup_dir = temp_dir.path().join("backups");
 
     // Setup: Create global and project configs
-    let global_config = ClaudeConfig::new()
-        .with_mcp_server("npx", McpServer::new("npx", "npx", vec![]));
+    let global_config =
+        ClaudeConfig::new().with_mcp_server("npx", McpServer::new("npx", "npx", vec![]));
 
     let project_dir = temp_dir.path().join("myproject");
     let claude_dir = project_dir.join(".claude");
     fs::create_dir_all(&claude_dir).unwrap();
 
-    let project_config = ClaudeConfig::new()
-        .with_mcp_server("uvx", McpServer::new("uvx", "uvx", vec![]));
+    let project_config =
+        ClaudeConfig::new().with_mcp_server("uvx", McpServer::new("uvx", "uvx", vec![]));
 
     let manager = ConfigManager::new(&backup_dir);
 
@@ -211,12 +217,19 @@ fn test_config_manager_integration_full_workflow() {
     let global_path = temp_dir.path().join("global.json");
     let project_path = claude_dir.join("config.json");
 
-    manager.write_config_with_backup(&global_path, &global_config).unwrap();
-    manager.write_config_with_backup(&project_path, &project_config).unwrap();
+    manager
+        .write_config_with_backup(&global_path, &global_config)
+        .unwrap();
+    manager
+        .write_config_with_backup(&project_path, &project_config)
+        .unwrap();
 
     // Verify backups were created
     let global_backups = manager.backup_manager().list_backups(&global_path).unwrap();
-    let project_backups = manager.backup_manager().list_backups(&project_path).unwrap();
+    let project_backups = manager
+        .backup_manager()
+        .list_backups(&project_path)
+        .unwrap();
 
     // No backups for first write (no existing file)
     assert_eq!(global_backups.len(), 0);

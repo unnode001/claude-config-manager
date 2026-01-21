@@ -23,7 +23,7 @@ pub use config::validation::validate_config;
 
 // Re-exports for convenience
 pub use backup::BackupManager;
-pub use config::{ClaudeConfig, manager::ConfigManager, merge::merge_configs};
+pub use config::{manager::ConfigManager, merge::merge_configs, ClaudeConfig};
 pub use error::{ConfigError, Result};
 pub use import_export::{ConfigImporter, ExportFormat, ImportExportOptions};
 pub use mcp::McpManager;
